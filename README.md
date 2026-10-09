@@ -20,14 +20,12 @@ running locally on your Mac. Lives in Terminal. Takes commands.</p>
 
 Run Dictator from a folder in Terminal. Setup needs no installer or administrator password.
 That makes it a practical option for work Macs where installing apps requires IT approval.
-Company restrictions on running software and microphone access still apply.
 
 Tap Right Command or Ctrl+Space, speak, and the text lands where you were typing.
-Without Accessibility permission, Dictator copies it to the clipboard for you to paste.
 Transcription runs locally on your Mac. Your audio stays on the device and is deleted afterwards.
 
 Choose a language with `/translate`, and Dictator automatically translates your dictation before
-inserting the text. Speak in Russian, write in English. Translation runs locally on your Mac (requires macOS 26+).
+inserting the text. Translation runs locally on your Mac (requires macOS 26+).
 
 The CLI keeps your dictations in view and puts controls a command away. Use `/mic` to switch
 microphones and `/copy` to copy an earlier dictation. It's free and open source, with no subscription.
