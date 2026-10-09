@@ -167,8 +167,9 @@ final class MicrophoneSelectionPolicyTests: XCTestCase {
 @MainActor
 final class MicrophonePreferencesTests: XCTestCase {
     func testChoiceAndUnavailableDevicesPersistAcrossRefreshAndRelaunch() throws {
-        let suite = "MicrophonePreferencesTests.\(UUID().uuidString)"
+        let suite = "DictatorTests.microphone"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
 
         var live = [
@@ -199,8 +200,9 @@ final class MicrophonePreferencesTests: XCTestCase {
     }
 
     func testUnavailableSpecificMicrophoneProducesAUsefulError() throws {
-        let suite = "MicrophonePreferencesTests.\(UUID().uuidString)"
+        let suite = "DictatorTests.microphone"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
         var live = [device("usb", "Desk Microphone", 2, default: true)]
         let preferences = MicrophonePreferences(
