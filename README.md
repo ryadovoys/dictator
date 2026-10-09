@@ -47,7 +47,7 @@ again. The first start downloads the speech model once (about 470 MB).
 
 Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 
-## Why Dictator
+## Propaganda
 
 |  | Dictator | Typical dictation apps |
 |---|---|---|
