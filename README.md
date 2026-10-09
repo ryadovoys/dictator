@@ -72,9 +72,9 @@ Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 - **Failures are erased from history.** The audio is deleted, and the Dictator apologises.
   In his own way.
 
-> *"Something went wrong, and heads will roll. Not yours. Try again."*
-> *"Treason! The microphone refuses to cooperate. Try another with /mic."*
-> *"Even my secret police heard nothing. Try again."*
+> *"The microphone has left on a voluntary vacation. Appoint a replacement with /mic."*
+> *"The listening ministry worked a full shift and heard nothing. They have been commended."*
+> *"A minor setback, already removed from the official record. Try again."*
 >
 > — the Dictator, when a dictation fails
 
