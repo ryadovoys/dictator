@@ -59,22 +59,25 @@ Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 
 ## Official decrees
 
-- **One leader, one key.** Tap Right Command and the Dictator takes the floor. Tap it again and
-  your words are decreed into whatever field you were typing in. Or hold it while you speak.
-- **No foreign interference.** Your speech is processed domestically. Not a single syllable has
-  applied for a visa.
-- **No paperwork.** The palace is a folder. Run it from Terminal; close the tab to dissolve
-  parliament.
-- **The ministry of commands.** `/mic` appoints a new microphone, `/copy` retrieves any of your
-  last five speeches from the archives. Type `/` to read the full constitution.
-- **All languages are welcome.** `/translate` inserts what you say in the one you choose.
-  Only one is official.
-- **Silence is not consent.** A clip with no voice in it stays silent: no phantom "Thank you"
-  or "Yeah". Silence before and after your words is cut before transcription.
-- **Failures never happened.** The audio is deleted, and the Dictator issues a statement.
+- **Tap or hold to dictate.** Tap Right Command, speak, tap again: the text goes into the field
+  you were typing in. Or hold the key while you speak. One leader, one key.
+- **Runs on your Mac.** Speech is transcribed locally by NVIDIA Parakeet. Audio never leaves the
+  device and is deleted afterwards. Not a single syllable has applied for a visa.
+- **Nothing to install.** It's a folder you run from Terminal: no installer, no admin password.
+  Close the tab to dissolve parliament.
+- **Commands in the terminal.** `/mic` switches the microphone, `/copy` copies any of your last
+  five dictations. Type `/` to see them all.
+- **Translation.** `/translate` inserts what you say in another language, translated on your Mac.
+  All languages are welcome; only one is official.
+- **No phantom words.** Silence stays silent: no made-up "Thank you" or "Yeah". Pauses before and
+  after your words are trimmed.
+- **Clear failures.** When a dictation fails, the audio is deleted and you're told why. The
+  Dictator apologises in his own way:
 
 > *"The microphone has left on a voluntary vacation. Appoint a replacement with /mic."*
+>
 > *"The listening ministry worked a full shift and heard nothing. They have been commended."*
+>
 > *"A minor setback, already removed from the official record. Try again."*
 >
 > — the Dictator, when a dictation fails
