@@ -1,7 +1,20 @@
-<p align="center"><b>A local dictation CLI for Mac. Take control of your agents.</b></p>
+<p align="center">
+  <img src="assets/dictator-head.gif" width="128" alt="The pixel Dictator, squinting under his beret">
+</p>
 
-<p align="center"><i>Tap Right Command, speak, and the text lands in any app: your agent's prompt, a chat, a doc.
-Speech is turned into text on your Mac by NVIDIA Parakeet. It runs in a Terminal tab, with nothing to install.</i></p>
+<h1 align="center">Dictator</h1>
+
+<p align="center"><b>You speak. He decrees it into any text field.</b></p>
+
+<p align="center">Local dictation for Mac. Runs in a Terminal tab, installs nothing, sends nothing anywhere.<br>
+A free, open-source alternative to Superwhisper and Wispr Flow, powered by NVIDIA Parakeet on your Mac.</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-15%2B-black" alt="macOS 15+">
+  <img src="https://img.shields.io/badge/Apple%20Silicon-M1%2B-black" alt="Apple Silicon">
+  <img src="https://img.shields.io/badge/100%25-offline-black" alt="100% offline">
+  <img src="https://img.shields.io/badge/license-MIT-black" alt="MIT license">
+</p>
 
 <p align="center">
   <a href="assets/dictator-demo.mp4">
@@ -9,24 +22,10 @@ Speech is turned into text on your Mac by NVIDIA Parakeet. It runs in a Terminal
   </a>
 </p>
 
-### The regime in brief
+<p align="center"><b>Tap Right Command, speak, tap again.</b> The text lands where you were typing:<br>
+your coding agent's prompt, a chat, an email, a doc.</p>
 
-- **One leader, one key.** Tap Right Command and the Dictator takes the floor. Tap it again and
-  your words are decreed into whatever field you were typing in. Or hold it while you speak.
-- **No foreign interference.** The speech model lives on your Mac. Not a syllable crosses the
-  border.
-- **No installation, no paperwork.** The palace is a folder. Unzip it, run it from Terminal,
-  close the tab to dissolve parliament.
-- **The ministry of commands.** `/mic` reassigns the microphone, `/copy` recovers any of your
-  last five speeches for the archives. Type `/` to see the full constitution.
-- **Silence is not consent.** A clip with no voice in it stays silent: no phantom "Thank you"
-  or "Yeah". Silence before and after your words is cut before transcription.
-- **Failures are erased from history.** When something goes wrong, the Dictator apologises
-  (in its own way) and tells you why.
-
-Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
-
-## Get it (and update it later)
+## Get it
 
 Open Terminal, go to the folder where you want it, and paste:
 
@@ -34,25 +33,50 @@ Open Terminal, go to the folder where you want it, and paste:
 curl -fsSL -o dictator.zip https://github.com/ryadovoys/dictator/releases/latest/download/dictator.zip && unzip -oq dictator.zip && rm dictator.zip && ./dictator/dictator
 ```
 
-The same command updates an existing copy. To start it again later:
+That's the whole installation. The same command updates it later; `./dictator/dictator` starts it
+again. The first start downloads the speech model once (about 470 MB).
 
-```bash
-./dictator/dictator
-```
+Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 
-The first start downloads the speech model (about 470 MB, once) into
-`~/Library/Application Support/Dictator Terminal/Models`.
+## Why Dictator
+
+|  | Dictator | Typical dictation apps |
+|---|---|---|
+| Price | Free, MIT | Often a subscription |
+| Installation | None: a folder you run from Terminal | An app, often admin rights |
+| Works on a locked-down work Mac | Yes, nothing to install | Often blocked by IT |
+| Where your audio goes | Nowhere. Transcribed on your Mac, then deleted | Often a cloud service |
+| Hallucinated "Thank you." in silence | Filtered out before transcription | Common with Whisper-based apps |
+
+## The regime in brief
+
+- **One leader, one key.** Tap Right Command and the Dictator takes the floor. Tap it again and
+  your words are decreed into whatever field you were typing in. Or hold it while you speak.
+- **No foreign interference.** The speech model lives on your Mac. Not a syllable crosses the
+  border.
+- **No paperwork.** The palace is a folder. Run it from Terminal, close the tab to dissolve
+  parliament.
+- **The ministry of commands.** `/mic` reassigns the microphone, `/copy` recovers any of your
+  last five speeches for the archives. Type `/` to see the full constitution.
+- **Silence is not consent.** A clip with no voice in it stays silent: no phantom "Thank you"
+  or "Yeah". Silence before and after your words is cut before transcription.
+- **Failures are erased from history.** The audio is deleted, and the Dictator apologises.
+  In his own way.
+
+> *"Something went wrong, and heads will roll. Not yours. Try again."*
+> *"Treason! The microphone refuses to cooperate. Try another with /mic."*
+> *"Even my secret police heard nothing. Try again."*
+>
+> — the Dictator, when a dictation fails
 
 ## Use
 
-- **Tap Right Command** (by itself) to start talking. A small pixel Dictator
-  appears with an animated mouth and speech bubble. They keep moving through pauses of up to
-  0.7 seconds. Tap Right Command again to stop and insert the text.
+- **Tap Right Command** (by itself) to start talking. The pixel Dictator appears above your text
+  cursor and mouths along while you speak, pauses included. Tap again to stop and insert the text.
 - **Or hold Right Command** while you speak and let go to insert (push-to-talk).
   Right Command + another key stays a normal shortcut.
 - **⌃Space** does the same (tap or hold) and works even without any permission.
-- **Esc** cancels. You can also hover over the character and click its pixel cross to cancel,
-  including while it is transcribing.
+- **Esc** cancels. Or hover over the Dictator and click his pixel cross. He will not like it.
 
 Everything else happens in the Terminal tab. Each dictation appears there, and the box at the
 bottom takes commands: type `/` to see them, or just start typing (`mi` → `mic`, `mic 2`, …;
@@ -86,14 +110,13 @@ macOS asks **Terminal** (not Dictator) for these, because Terminal started it:
 | Permission | Needed for | Without it |
 |---|---|---|
 | Microphone | Recording | Dictator cannot work. Allow it when macOS asks. |
-| Accessibility (optional) | Typing the text into the field; bubble at the text cursor; Right Command | Text goes to the clipboard: press **⌘V**. The bubble appears at the mouse pointer. |
+| Accessibility (optional) | Typing the text into the field; Dictator at the text cursor; Right Command | Text goes to the clipboard: press **⌘V**. The Dictator appears at the mouse pointer. |
 | Input Monitoring (optional) | Right Command without Accessibility | Use **⌃Space** instead. |
 
 On the first start Dictator asks macOS to show the Accessibility prompt; until it is on, a note
 at the top explains clipboard mode and how to enable automatic insertion. `/accessibility`
-opens that setting. Dictator notices
-the change by itself, no restart needed. On a managed Mac, Accessibility may need IT. Everything
-else works without it.
+opens that setting, and Dictator notices the change by itself, no restart needed. On a managed
+Mac, Accessibility may need IT. Everything else works without it.
 
 ## If something goes wrong
 
@@ -105,9 +128,9 @@ else works without it.
 - **Right Command does nothing**: turn on Accessibility (or Input Monitoring) for Terminal, or use
   ⌃Space. `/status` shows whether Right Command can be read. If ⌃Space switches your keyboard
   layout instead, that shortcut belongs to macOS (Keyboard → Keyboard Shortcuts → Input Sources).
-- A failed dictation is not kept: Dictator apologises (in its own way), says why, and you try again.
 
-`./dictator/dictator --help` lists the options.
+`./dictator/dictator --help` lists the options. The model lives in
+`~/Library/Application Support/Dictator Terminal/Models`.
 
 ## Build from source
 
@@ -128,6 +151,12 @@ swift build -c release && .build/release/Dictator
 
 Speech recognition is [FluidAudio](https://github.com/FluidInference/FluidAudio) running NVIDIA
 Parakeet TDT 0.6b v3 and Silero VAD on device.
+
+## Contributing
+
+The easiest way in: write the Dictator a new apology. They live in
+[`Sources/Dictator/DictatorQuips.swift`](Sources/Dictator/DictatorQuips.swift), grouped by what
+went wrong. Bug reports and pull requests are welcome too.
 
 ## License
 
