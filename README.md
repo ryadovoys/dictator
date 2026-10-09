@@ -16,6 +16,22 @@ running locally on your Mac. Lives in Terminal. Takes commands.</p>
   <img src="https://img.shields.io/badge/license-MIT-black" alt="MIT license">
 </p>
 
+Run Dictator from a folder in Terminal. Setup needs no installer or administrator password.
+That makes it a practical option for work Macs where installing apps requires IT approval.
+Company restrictions on running software and microphone access still apply.
+
+Tap Right Command or Ctrl+Space, speak, and the text lands where you were typing.
+Without Accessibility permission, Dictator copies it to the clipboard for you to paste.
+Transcription runs locally on your Mac. Your audio stays on the device and is deleted afterwards.
+
+Choose a language with `/translate`, and Dictator automatically translates your dictation before
+inserting the text. Speak in Russian, write in English. Translation runs locally on your Mac.
+
+<p><sub>Translation requires macOS 26+ and downloaded Apple translation language packs.</sub></p>
+
+The CLI keeps your dictations in view and puts controls a command away. Use `/mic` to switch
+microphones and `/copy` to copy an earlier dictation. It's free and open source, with no subscription.
+
 ---
 
 <p align="center">
@@ -46,7 +62,7 @@ Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 |---|---|---|
 | Price | Free, MIT | Often a subscription |
 | Installation | None: a folder you run from Terminal | An app, often admin rights |
-| Works on a locked-down work Mac | Yes, nothing to install | Often blocked by IT |
+| Works on a locked-down work Mac | No admin setup; IT policies still apply | Often blocked by IT |
 | Where your audio goes | Nowhere. Transcribed on your Mac, then deleted | Often a cloud service |
 | Hallucinated "Thank you." in silence | Filtered out before transcription | Common with Whisper-based apps |
 
