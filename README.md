@@ -16,6 +16,8 @@ running locally on your Mac. Lives in Terminal. Takes commands.</p>
   <img src="https://img.shields.io/badge/license-MIT-black" alt="MIT license">
 </p>
 
+---
+
 Run Dictator from a folder in Terminal. Setup needs no installer or administrator password.
 That makes it a practical option for work Macs where installing apps requires IT approval.
 Company restrictions on running software and microphone access still apply.
@@ -31,8 +33,6 @@ inserting the text. Speak in Russian, write in English. Translation runs locally
 
 The CLI keeps your dictations in view and puts controls a command away. Use `/mic` to switch
 microphones and `/copy` to copy an earlier dictation. It's free and open source, with no subscription.
-
----
 
 <p align="center">
   <a href="assets/dictator-demo.mp4">
