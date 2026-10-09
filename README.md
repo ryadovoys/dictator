@@ -16,6 +16,8 @@ A free, open-source alternative to Superwhisper and Wispr Flow, powered by NVIDI
   <img src="https://img.shields.io/badge/license-MIT-black" alt="MIT license">
 </p>
 
+---
+
 <p align="center">
   <a href="assets/dictator-demo.mp4">
     <img src="assets/dictator-demo.gif" width="800" alt="Two dictations side by side: the pixel Dictator appears under the text cursor in Notes, the text is inserted there, and each dictation shows up in the Dictator Terminal window">
