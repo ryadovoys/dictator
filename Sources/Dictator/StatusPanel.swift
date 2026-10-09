@@ -172,8 +172,8 @@ final class DictationStatusPanel {
     }
 
     /// The wave, from the tap on: flat until the microphone delivers audio.
-    /// Without a caret (no Accessibility), the bubble goes above the mouse pointer instead.
-    func showRecording(aboveCaret caretRect: CGRect? = nil) {
+    /// Without a caret (no Accessibility), the bubble goes by the mouse pointer instead.
+    func showRecording(nearCaret caretRect: CGRect? = nil) {
         if let anchor = caretRect ?? Self.pointerRect { self.caretRect = anchor; leftEdge = nil }
         levels.start()
         let levels = levels
@@ -204,7 +204,8 @@ final class DictationStatusPanel {
         panel.orderFrontRegardless()
     }
 
-    /// Above the caret when there is room, else below it; bottom right when there is no caret.
+    /// Below the caret when there is room, so the text written so far stays readable, else above
+    /// it; bottom right when there is no caret.
     /// The mouse pointer as a thin caret-like rect, in the same top-left Accessibility coordinates.
     private static var pointerRect: CGRect? {
         guard let top = NSScreen.screens.first?.frame.maxY else { return nil }
@@ -232,7 +233,7 @@ final class DictationStatusPanel {
         let x = min(max(left, area.minX + gap), area.maxX - size.width - gap)
         let above = caret.maxY + gap
         let below = caret.minY - size.height - gap
-        let preferredY = above + size.height <= area.maxY - gap ? above : max(area.minY + gap, below)
+        let preferredY = below >= area.minY + gap ? below : above
         let y = min(max(preferredY, area.minY + gap), area.maxY - size.height - gap)
         panel.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: size), display: true)
     }

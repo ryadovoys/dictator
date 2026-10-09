@@ -239,7 +239,7 @@ final class DictationController: ObservableObject {
         }
         focusTarget = FocusInserter.capture(preferredPID: preferredPID)
         phase = .starting
-        panel.showRecording(aboveCaret: focusTarget?.caretRect)
+        panel.showRecording(nearCaret: focusTarget?.caretRect)
         Task {
             do {
                 try await DictationMicrophonePermission.requireAccess()

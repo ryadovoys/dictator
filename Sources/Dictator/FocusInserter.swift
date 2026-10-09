@@ -127,7 +127,7 @@ enum FocusInserter {
         }
         guard let field else { return nil }
         // Empty editors often report the whole field for a zero-length range. Use the leading
-        // text inset, not the field midpoint, so the indicator stays above the insertion line.
+        // text inset, not the field midpoint, so the indicator stays next to the insertion line.
         let xInset = min(24, max(10, field.width * 0.05))
         let yInset = min(32, max(8, field.height * 0.15))
         return CGRect(x: field.minX + xInset, y: field.minY + yInset,

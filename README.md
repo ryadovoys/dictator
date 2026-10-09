@@ -18,7 +18,7 @@ A free, open-source alternative to Superwhisper and Wispr Flow, powered by NVIDI
 
 <p align="center">
   <a href="assets/dictator-demo.mp4">
-    <img src="assets/dictator-demo.gif" width="800" alt="Two dictations side by side: the pixel Dictator appears above the text cursor in Notes, the text is inserted there, and each dictation shows up in the Dictator Terminal window">
+    <img src="assets/dictator-demo.gif" width="800" alt="Two dictations side by side: the pixel Dictator appears under the text cursor in Notes, the text is inserted there, and each dictation shows up in the Dictator Terminal window">
   </a>
 </p>
 
@@ -71,7 +71,7 @@ Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 
 ## Use
 
-- **Tap Right Command** (by itself) to start talking. The pixel Dictator appears above your text
+- **Tap Right Command** (by itself) to start talking. The pixel Dictator appears under your text
   cursor and mouths along while you speak, pauses included. Tap again to stop and insert the text.
 - **Or hold Right Command** while you speak and let go to insert (push-to-talk).
   Right Command + another key stays a normal shortcut.
