@@ -27,9 +27,7 @@ Without Accessibility permission, Dictator copies it to the clipboard for you to
 Transcription runs locally on your Mac. Your audio stays on the device and is deleted afterwards.
 
 Choose a language with `/translate`, and Dictator automatically translates your dictation before
-inserting the text. Speak in Russian, write in English. Translation runs locally on your Mac.
-
-<p><sub>Translation requires macOS 26+ and downloaded Apple translation language packs.</sub></p>
+inserting the text. Speak in Russian, write in English. Translation runs locally on your Mac (requires macOS 26+).
 
 The CLI keeps your dictations in view and puts controls a command away. Use `/mic` to switch
 microphones and `/copy` to copy an earlier dictation. It's free and open source, with no subscription.
@@ -39,9 +37,6 @@ microphones and `/copy` to copy an earlier dictation. It's free and open source,
     <img src="assets/dictator-demo.gif" width="800" alt="Dictating to an agent: the pixel Dictator appears at the chat composer, the text is inserted and sent, the agent answers, and each dictation shows up in the Dictator Terminal window">
   </a>
 </p>
-
-<p align="center"><b>Tap Right Command, speak, tap again.</b> The text lands where you were typing:<br>
-your coding agent's prompt, a chat, an email, a doc.</p>
 
 ## Get it
 
