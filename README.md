@@ -4,7 +4,7 @@
 
 <h1 align="center">Dictator</h1>
 
-<p align="center"><b>A local dictation CLI for Mac. Rule your agents with your voice.</b></p>
+<p align="center"><b>A local dictation CLI for Mac. Rule your tasks with your voice.</b></p>
 
 <p align="center">A free, open-source alternative to Superwhisper, Wispr Flow and Granola that lives in your Terminal
 and runs NVIDIA Parakeet locally on your Mac.</p>
