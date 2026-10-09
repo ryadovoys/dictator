@@ -133,7 +133,7 @@ at the top explains clipboard mode and how to enable automatic insertion. `/acce
 opens that setting, and Dictator notices the change by itself, no restart needed. On a managed
 Mac, Accessibility may need IT. Everything else works without it.
 
-## If something goes wrong
+## Incident reports
 
 - **“cannot be opened” / “killed”**: you downloaded the zip in a browser. Run
   `xattr -dr com.apple.quarantine dictator` once, or use the curl command above.
@@ -147,7 +147,7 @@ Mac, Accessibility may need IT. Everything else works without it.
 `./dictator/dictator --help` lists the options. The model lives in
 `~/Library/Application Support/Dictator Terminal/Models`.
 
-## Build from source
+## Blueprints
 
 Needs Xcode 16 or later (Swift 6 toolchain).
 
@@ -167,7 +167,7 @@ swift build -c release && .build/release/Dictator
 Speech recognition is [FluidAudio](https://github.com/FluidInference/FluidAudio) running NVIDIA
 Parakeet TDT 0.6b v3 and Silero VAD on device.
 
-## Contributing
+## Join the party
 
 The easiest way in: write the Dictator a new apology. They live in
 [`Sources/Dictator/DictatorQuips.swift`](Sources/Dictator/DictatorQuips.swift), grouped by what
