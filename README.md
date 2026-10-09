@@ -34,7 +34,7 @@ Tap Right Command or Ctrl+Space, speak, and the text lands where you were typing
 You can even choose a language with `/translate`, and Dictator automatically translates your dictation
 before inserting the text (requires macOS 26+).
 
-## Get it
+## Guide
 
 Open Terminal, go to the folder where you want it, and paste:
 
