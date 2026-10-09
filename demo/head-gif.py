@@ -1,20 +1,30 @@
-# Renders the talking Dictator head (no bubble) as a looping, transparent GIF for the README.
-# Faces come from demo.html (copied from PixelArt.swift). Run: python3 head-gif.py
+# Renders the resting Dictator head (looking straight at you, blinking now and then) as a looping,
+# transparent GIF for the README. Pixels come from demo.html (copied from PixelArt.swift and
+# CharacterEyes.swift). Run: python3 head-gif.py
 import json, re
 from pathlib import Path
 from PIL import Image
 
 HERE = Path(__file__).parent
-PIXELS = json.loads(re.search(r"const PIXELS = (\{.*?\});", (HERE / "demo.html").read_text()).group(1))
+SOURCE = (HERE / "demo.html").read_text()
+PIXELS = json.loads(re.search(r"const PIXELS = (\{.*?\});", SOURCE).group(1))
 CELL = 8
-MOUTH_STEP = 110  # ms, as CharacterIndicator.mouthStep
-TALK = [2, 4, 1, 5, 3, 1, 4, 2, 5, 3]  # CharacterIndicator.talkSequence
-# Phrases separated by closed-mouth pauses: (talking frames, pause ms).
-PHRASES = [(14, 450), (9, 300), (17, 800)]
+BLINK = 160  # ms, as CharacterEyeAnimation.silent
+# Open-eye stretches between blinks, varied like the app so it never feels mechanical (ms).
+GAPS = [2600, 3700, 450, 3100]
 
 
-def frame(face):
-    grid = PIXELS["faces"][face]
+def eyes(name):
+    return json.loads(re.search(rf"const {name} = (\[.*?\]);", SOURCE, re.S).group(1))
+
+
+def face(eye_rows):
+    # Eyes are pasted at cell (15, 18), as in demo.html's withEyes.
+    return [row[:15] + eye_rows[y - 18] + row[35:] if 0 <= y - 18 < len(eye_rows) else row
+            for y, row in enumerate(PIXELS["faces"][0])]
+
+
+def frame(grid):
     image = Image.new("P", (len(grid[0]) * CELL, len(grid) * CELL), 0)
     image.putpalette([0, 0, 0, 0, 0, 0, 255, 255, 255])  # 0 transparent, 1 black, 2 white
     for y, row in enumerate(grid):
@@ -24,11 +34,10 @@ def frame(face):
     return image
 
 
-frames, durations, step = [], [], 0
-for talking, pause in PHRASES:
-    for _ in range(talking):
-        frames.append(frame(TALK[step % len(TALK)])); durations.append(MOUTH_STEP); step += 1
-    frames.append(frame(0)); durations.append(pause)
+forward, blink = frame(face(eyes("FORWARD_EYES"))), frame(face(eyes("BLINK_EYES")))
+frames, durations = [], []
+for gap in GAPS:
+    frames += [forward, blink]; durations += [gap, BLINK]
 
 frames[0].save(HERE.parent / "assets" / "dictator-head.gif", save_all=True, append_images=frames[1:],
                duration=durations, loop=0, transparency=0, disposal=2, optimize=False)

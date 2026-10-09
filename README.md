@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/dictator-head.gif" width="128" alt="The pixel Dictator, squinting under his beret">
+  <img src="assets/dictator-head.gif" width="128" alt="The pixel Dictator, looking at you and blinking">
 </p>
 
 <h1 align="center">Dictator</h1>
@@ -18,7 +18,7 @@ A free, open-source alternative to Superwhisper and Wispr Flow, powered by NVIDI
 
 <p align="center">
   <a href="assets/dictator-demo.mp4">
-    <img src="assets/dictator-demo.gif" width="800" alt="Dictator in a Terminal window: two dictations, switching the microphone with /mic, copying an earlier dictation with /copy">
+    <img src="assets/dictator-demo.gif" width="800" alt="Two dictations side by side: the pixel Dictator appears above the text cursor in Notes, the text is inserted there, and each dictation shows up in the Dictator Terminal window">
   </a>
 </p>
 

@@ -1,11 +1,12 @@
 // Renders demo.html frame by frame for the README demo (assets/dictator-demo.mp4 and .gif).
 // npm i playwright && DSF=1.5 node capture.mjs video 30     stills: node capture.mjs stills 4.6 13.8
-// then: ffmpeg -framerate 30 -i frames/f%05d.png -c:v libx264 -crf 20 -pix_fmt yuv420p ../assets/dictator-demo.mp4
+// then: ffmpeg -framerate 30 -i frames/f%05d.png -c:v libx264 -crf 20 -pix_fmt yuv420p -movflags +faststart ../assets/dictator-demo.mp4
+// and:  ffmpeg -framerate 30 -i frames/f%05d.png -vf "fps=20,scale=1066:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" ../assets/dictator-demo.gif
 import { chromium } from 'playwright';
 import { mkdirSync } from 'fs';
 const [mode, ...args] = process.argv.slice(2);
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: Number(process.env.DSF || 1) });
+const page = await browser.newPage({ viewport: { width: 1332, height: 740 }, deviceScaleFactor: Number(process.env.DSF || 1) });
 await page.goto('file://' + process.cwd() + '/demo.html');
 await page.evaluate(() => document.fonts.ready);
 if (mode === 'stills') {
