@@ -10,9 +10,9 @@
 and runs NVIDIA Parakeet locally on your Mac.</p>
 
 <p align="center">
-  <img src="assets/badges/macos.svg" alt="macOS 15+">
-  <img src="assets/badges/apple-silicon.svg" alt="Apple Silicon M1+">
-  <img src="assets/badges/offline.svg" alt="100% offline">
+  <img src="assets/badges/macos.svg" alt="macOS 15+">&nbsp;&nbsp;&nbsp;
+  <img src="assets/badges/apple-silicon.svg" alt="Apple Silicon M1+">&nbsp;&nbsp;&nbsp;
+  <img src="assets/badges/offline.svg" alt="100% offline">&nbsp;&nbsp;&nbsp;
   <img src="assets/badges/license.svg" alt="MIT license">
 </p>
 
