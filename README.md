@@ -123,7 +123,7 @@ swift build -c release && .build/release/Dictator
 | `Sources/Dictator/` | the app: key handling, recording, transcription, terminal interface, pixel character |
 | `Sources/DictationKit/` | microphone capture |
 | `scripts/release.sh` | builds `dist/dictator.zip`, the download in the command above |
-| `scripts/dev.sh` | local dev loop: rebuild and restart a copy in `~/Tools/dictator` |
+| `scripts/dev.sh` | dev loop: rebuild and restart the debug build in a Terminal tab |
 | `tools/keytest.swift` | shows whether this Mac lets a terminal see Right Command |
 
 Speech recognition is [FluidAudio](https://github.com/FluidInference/FluidAudio) running NVIDIA

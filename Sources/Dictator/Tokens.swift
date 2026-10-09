@@ -31,5 +31,5 @@ enum Space {
 
 enum Size {
     /// Height of the pixel Dictator; the character and speech bubble scale together.
-    static let indicator: CGFloat = 36
+    static let indicator: CGFloat = 40
 }
