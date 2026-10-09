@@ -105,7 +105,7 @@ the `/` is optional). ↑↓ choose, Tab completes, Enter runs.
 | `/accessibility` | ask macOS to let Dictator type the text for you |
 | `/quit` | quit (Ctrl+C works too) |
 
-### Run in the background
+### Spy mode
 
 ```bash
 ./dictator/dictator --background
