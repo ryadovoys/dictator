@@ -25,29 +25,34 @@
     --font-sans: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
     --font-size-term: 15px;
     --line-height-term: 21px;
-    --font-size-note: 17px;
-    --line-height-note: 26px;
-    --font-size-note-title: 26px;
-    --font-size-note-date: 12px;
+    --font-size-chat: 15px;
+    --line-height-chat: 21px;
+    --font-size-chat-meta: 12px;
     --font-size-key: 18px;
 
     --space-2: 8px;
     --space-3: 12px;
     --space-4: 16px;
+    --space-5: 20px;
     --space-6: 28px;
     --space-7: 40px;
 
     --window-size: 610px;
     --radius-window: 12px;
     --radius-key: 10px;
+    --radius-bubble: 16px;
+    --radius-composer: 14px;
     --shadow-window: 0 30px 80px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
 
     /* Semantic */
     --color-stage: var(--color-black);
     --color-window: var(--color-ink-900);
     --color-titlebar: var(--color-ink-800);
-    --color-note: var(--color-ink-850);
-    --color-note-toolbar: var(--color-ink-750);
+    --color-chat: var(--color-ink-850);
+    --color-chat-toolbar: var(--color-ink-750);
+    --color-bubble-user: var(--color-ink-600);
+    --color-composer: var(--color-ink-750);
+    --color-composer-border: var(--color-ink-600);
     --color-text: var(--color-white);
     --color-muted: var(--color-grey-500);
     --color-recording: var(--color-red-500);
@@ -67,14 +72,28 @@
   .titlebar .title { position: absolute; left: 0; right: 0; text-align: center; font: 600 13px var(--font-sans);
     color: var(--color-muted); pointer-events: none; }
 
-  #notes { left: var(--space-7); background: var(--color-note); }
-  #notes .titlebar { height: 46px; background: var(--color-note-toolbar); }
-  #note { padding: var(--space-4) var(--space-6); font: var(--font-size-note)/var(--line-height-note) var(--font-sans);
+  #chat { left: var(--space-7); background: var(--color-chat); display: flex; flex-direction: column; }
+  #chat .titlebar { height: 46px; flex: none; background: var(--color-chat-toolbar); }
+  #chat .titlebar .title { color: var(--color-text); }
+  #messages { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--space-4);
+    padding: var(--space-4) var(--space-5); overflow: hidden; font: var(--font-size-chat)/var(--line-height-chat) var(--font-sans);
     color: var(--color-text); }
-  #note .date { font-size: var(--font-size-note-date); color: var(--color-muted); text-align: center; margin-bottom: var(--space-3); }
-  #note h1 { font-size: var(--font-size-note-title); line-height: 34px; font-weight: 700; margin-bottom: var(--space-2); }
-  #note p { min-height: var(--line-height-note); }
-  #caret { display: inline-block; width: 2px; height: 20px; margin-right: -2px; vertical-align: -4px; background: var(--color-text); }
+  .msg.user { align-self: flex-end; max-width: 78%; background: var(--color-bubble-user); border-radius: var(--radius-bubble);
+    padding: var(--space-2) var(--space-4); }
+  .msg.agent { align-self: flex-start; max-width: 86%; display: flex; gap: var(--space-3); }
+  .avatar { width: 26px; height: 26px; flex: none; border-radius: 50%; background: var(--color-text); color: var(--color-chat);
+    font: 700 13px var(--font-sans); display: flex; align-items: center; justify-content: center; }
+  .agent .name { font-size: var(--font-size-chat-meta); color: var(--color-muted); }
+  .typing { color: var(--color-muted); letter-spacing: 3px; }
+  #composer { flex: none; margin: 0 var(--space-5) var(--space-5); display: flex; align-items: center; gap: var(--space-3);
+    background: var(--color-composer); border: 1px solid var(--color-composer-border); border-radius: var(--radius-composer);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); font: var(--font-size-chat)/var(--line-height-chat) var(--font-sans);
+    color: var(--color-text); }
+  #field { flex: 1; min-height: var(--line-height-chat); }
+  #field .placeholder { color: var(--color-muted); }
+  #send { width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--color-text); color: var(--color-chat);
+    font: 700 15px var(--font-sans); display: flex; align-items: center; justify-content: center; }
+  #caret { display: inline-block; width: 2px; height: 18px; margin-right: -2px; vertical-align: -4px; background: var(--color-text); }
 
   #terminal { left: calc(var(--space-7) + var(--window-size) + 32px); background: var(--color-window); }
   #terminal .titlebar { background: var(--color-titlebar); border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -100,13 +119,15 @@
 </head>
 <body>
 <div id="stage">
-  <div class="window" id="notes">
+  <div class="window" id="chat">
     <div class="titlebar">
       <div class="light" style="background:var(--color-traffic-red)"></div>
       <div class="light" style="background:var(--color-traffic-yellow)"></div>
       <div class="light" style="background:var(--color-traffic-green)"></div>
+      <div class="title">Agent</div>
     </div>
-    <div id="note"></div>
+    <div id="messages"></div>
+    <div id="composer"><div id="field"></div><div id="send">↑</div></div>
   </div>
   <div class="window" id="terminal">
     <div class="titlebar">
@@ -183,17 +204,19 @@ const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const html = segs => segs.map(([t, c]) => c ? `<span class="${c}">${esc(t)}</span>` : esc(t)).join("");
 
 // ---- Timeline ---------------------------------------------------------------
-const TEXT1 = "Move the design review to Thursday at three.";
-const TEXT2 = "Fix the login bug before the Friday release.";
+// You give the orders; the agent answers like a loyal minister.
+const TEXT1 = "Fix the login bug before the Friday release.";
+const REPLY1 = "Yes, sir! The bug will be eliminated by Thursday. It will not be missed.";
+const TEXT2 = "And write tests this time. No excuses.";
+const REPLY2 = "At once, Supreme Leader. 14 tests written, all passing. Glory to the build.";
 const T = {
-  rec1: [1.2, 4.6], done1: 5.3, newline: 6.1,
-  rec2: [6.9, 9.9], done2: 10.6,
-  slash: 11.6, down: 12.2, tab: 12.8, cdown1: 13.5, cdown2: 14.0, pickCopy: 14.7, end: 17.0,
+  rec1: [1.2, 4.2], done1: 4.9, send1: 5.6, typing1: 5.8, reply1: [6.7, 8.0],
+  rec2: [9.0, 11.6], done2: 12.3, send2: 13.0, typing2: 13.2, reply2: [14.1, 15.4],
+  slash: 16.6, down: 17.2, tab: 17.8, cdown1: 18.5, cdown2: 19.0, pickCopy: 19.7, end: 22.5,
 };
 const KEYS = [
-  [T.rec1[0], 0.8, "Right ⌘", "start"], [T.rec1[1], 0.8, "Right ⌘", "stop"],
-  [T.newline, 0.5, "⏎"],
-  [T.rec2[0], 0.8, "Right ⌘", "start"], [T.rec2[1], 0.8, "Right ⌘", "stop"],
+  [T.rec1[0], 0.8, "Right ⌘", "start"], [T.rec1[1], 0.8, "Right ⌘", "stop"], [T.send1, 0.5, "⏎", "send"],
+  [T.rec2[0], 0.8, "Right ⌘", "start"], [T.rec2[1], 0.8, "Right ⌘", "stop"], [T.send2, 0.5, "⏎", "send"],
   [T.slash, 0.5, "/"], [T.down, 0.45, "↓"], [T.tab, 0.5, "Tab"],
   [T.cdown1, 0.45, "↓"], [T.cdown2, 0.45, "↓"], [T.pickCopy, 0.55, "⏎"],
 ];
@@ -219,12 +242,19 @@ const entry = (text, seconds) => [[S("⏺ "), S(text)], [S("  ⎿ inserted · " 
 
 function state(t) {
   const st = { lines: [], status: null, face: null, dots: 0, scale: 0,
-               note: [], recording: false, overlay: [], input: "", terminalFocused: t >= T.slash };
-  // Notes: the dictations land where the text cursor was.
-  st.note = ["Ideas from the standup:", "Ship the onboarding flow next sprint.", ""];
-  if (t >= T.done1) st.note[2] = TEXT1;
-  if (t >= T.newline) st.note.push("");
-  if (t >= T.done2) st.note[3] = TEXT2;
+               messages: [], composer: "", recording: false, overlay: [], input: "", terminalFocused: t >= T.slash };
+  // Chat: each dictation lands in the composer, is sent, and the agent answers word by word.
+  if (t >= T.done1 && t < T.send1) st.composer = TEXT1;
+  if (t >= T.done2 && t < T.send2) st.composer = TEXT2;
+  const words = (text, [a, b]) => { const w = text.split(" "); return w.slice(0, Math.min(w.length, Math.floor((t - a) / (b - a) * w.length) + 1)).join(" "); };
+  const agent = (typing, reply, text) => {
+    if (t >= reply[0]) st.messages.push({ who: "agent", text: words(text, reply) });
+    else if (t >= typing) st.messages.push({ who: "agent", typing: true });
+  };
+  if (t >= T.send1) st.messages.push({ who: "user", text: TEXT1 });
+  agent(T.typing1, T.reply1, REPLY1);
+  if (t >= T.send2) st.messages.push({ who: "user", text: TEXT2 });
+  agent(T.typing2, T.reply2, REPLY2);
 
   // Terminal: banner, then one entry per dictation.
   const L = st.lines;
@@ -235,8 +265,8 @@ function state(t) {
          [S("Audio is deleted after transcription", "m")],
          [S("Right Command key to dictate · Esc to cancel", "m")], []);
   const push = block => { block.forEach(l => wrap(l).forEach(w => L.push(w))); L.push([]); };
-  if (t >= T.done1) push(entry(TEXT1, "3.4 s"));
-  if (t >= T.done2) push(entry(TEXT2, "3.0 s"));
+  if (t >= T.done1) push(entry(TEXT1, "3.0 s"));
+  if (t >= T.done2) push(entry(TEXT2, "2.6 s"));
   if (t >= T.pickCopy) push(answer("/copy 2", [S("Copied: "), S(TEXT1)]));
 
   // "/" lists the commands; Tab on copy lists the last dictations, newest first.
@@ -280,15 +310,19 @@ function state(t) {
 }
 
 // ---- Render -----------------------------------------------------------------
-const screen = document.getElementById("screen"), note = document.getElementById("note");
+const screen = document.getElementById("screen");
 function render(t) {
   const st = state(t);
 
-  // Notes, with the caret at the end of the last paragraph. It blinks only while idle.
-  // Once you type into Terminal, Notes loses focus and its caret disappears.
+  // Chat. The composer caret blinks only while idle and disappears once Terminal has focus.
   const caretOn = !st.terminalFocused && (st.recording || Math.floor(t * 1.8) % 2 === 0);
-  const paras = st.note.map((p, i) => `<p>${esc(p)}${i === st.note.length - 1 ? `<span id="caret" style="opacity:${caretOn ? 1 : 0}"></span>` : ""}</p>`);
-  note.innerHTML = `<div class="date">9 October 2026 at 09:41</div><h1>This week</h1>` + paras.join("");
+  const caret = `<span id="caret" style="opacity:${caretOn ? 1 : 0}"></span>`;
+  document.getElementById("field").innerHTML = st.composer
+    ? esc(st.composer) + caret : caret + `<span class="placeholder">Message the agent…</span>`;
+  document.getElementById("send").style.opacity = st.composer ? 1 : 0.35;
+  document.getElementById("messages").innerHTML = st.messages.map(m => m.who === "user"
+    ? `<div class="msg user">${esc(m.text)}</div>`
+    : `<div class="msg agent"><div class="avatar">A</div><div><div class="name">Agent</div>${m.typing ? `<span class="typing">•••</span>` : esc(m.text)}</div></div>`).join("");
 
   // Terminal.
   const rule = [S("─".repeat(COLS - 1), "m")];
@@ -305,15 +339,17 @@ function render(t) {
     w.style.opacity = ease; w.style.transform = `translateY(${(1 - ease) * 24}px)`;
   });
 
-  // Dictator: centred on the caret, 8 pt below it so the text above stays readable, kept inside the Notes window.
+  // Dictator: centred on the caret and below it, or above it when the caret is within 100 pt of the
+  // bottom edge (StatusPanel uses the screen; here the chat window stands in for it).
   const d = document.getElementById("dictator");
   if (st.face && st.scale > 0) {
     drawDictator(st.face, st.dots);
     const caret = document.getElementById("caret").getBoundingClientRect();
-    const win = document.getElementById("notes").getBoundingClientRect();
+    const win = document.getElementById("chat").getBoundingClientRect();
     const left = Math.min(Math.max(caret.left + caret.width / 2 - dcanvas.width / 2, win.left + GAP), win.right - dcanvas.width - GAP);
     d.style.left = `${Math.round(left)}px`;
-    d.style.top = `${Math.round(caret.bottom + GAP)}px`;
+    const below = win.bottom - caret.bottom >= 100;
+    d.style.top = `${Math.round(below ? caret.bottom + GAP : caret.top - GAP - dcanvas.height)}px`;
     const s = st.scale, pop = s < 1 ? s * (1 + 0.12 * Math.sin(s * Math.PI)) : 1;
     d.style.opacity = Math.min(1, s * 1.5); d.style.transform = `scale(${pop})`;
   } else d.style.opacity = 0;

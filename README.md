@@ -4,10 +4,10 @@
 
 <h1 align="center">Dictator</h1>
 
-<p align="center"><b>You speak. He decrees it into any text field.</b></p>
+<p align="center"><b>A local dictation CLI for Mac. Rule your agents with your voice.</b></p>
 
-<p align="center">Local dictation for Mac. Runs in a Terminal tab, installs nothing, sends nothing anywhere.<br>
-A free, open-source alternative to Superwhisper and Wispr Flow, powered by NVIDIA Parakeet on your Mac.</p>
+<p align="center">A free, open-source alternative to Superwhisper, Wispr Flow and Granola, powered by NVIDIA Parakeet
+running locally on your Mac. Lives in Terminal. Takes commands.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-15%2B-black" alt="macOS 15+">
@@ -20,7 +20,7 @@ A free, open-source alternative to Superwhisper and Wispr Flow, powered by NVIDI
 
 <p align="center">
   <a href="assets/dictator-demo.mp4">
-    <img src="assets/dictator-demo.gif" width="800" alt="Two dictations side by side: the pixel Dictator appears under the text cursor in Notes, the text is inserted there, and each dictation shows up in the Dictator Terminal window">
+    <img src="assets/dictator-demo.gif" width="800" alt="Dictating to an agent: the pixel Dictator appears at the chat composer, the text is inserted and sent, the agent answers, and each dictation shows up in the Dictator Terminal window">
   </a>
 </p>
 
