@@ -173,6 +173,12 @@ The easiest way in: write the Dictator a new apology. They live in
 [`Sources/Dictator/DictatorQuips.swift`](Sources/Dictator/DictatorQuips.swift), grouped by what
 went wrong. Bug reports and pull requests are welcome too.
 
+## Party dues
+
+Dictator is free and stays free. If it saves you time, you can support it with a coffee:
+[buymeacoffee.com/ryadovoys](https://buymeacoffee.com/ryadovoys). Every cup goes straight to the
+national treasury, which is one developer.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
