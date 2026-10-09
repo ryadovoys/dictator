@@ -82,7 +82,7 @@ Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 >
 > — the Dictator, when a dictation fails
 
-## Use
+## Handbook
 
 - **Tap Right Command** (by itself) to start talking. The pixel Dictator appears under your text
   cursor and mouths along while you speak, pauses included. Tap again to stop and insert the text.
