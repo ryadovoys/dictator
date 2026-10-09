@@ -231,8 +231,9 @@ final class DictationStatusPanel {
         let left = leftEdge ?? caret.midX - size.width / 2
         leftEdge = left
         let x = min(max(left, area.minX + gap), area.maxX - size.width - gap)
-        let above = caret.maxY + gap
-        let below = caret.minY - size.height - gap
+        let caretGap: CGFloat = 12
+        let above = caret.maxY + caretGap
+        let below = caret.minY - size.height - caretGap
         let roomBelow: CGFloat = 100
         let preferredY = caret.minY - area.minY >= roomBelow ? below : above
         let y = min(max(preferredY, area.minY + gap), area.maxY - size.height - gap)

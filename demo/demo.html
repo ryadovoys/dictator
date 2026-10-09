@@ -145,7 +145,7 @@ const withEyes = eyes => PIXELS.faces[0].map((row, y) => eyes[y - 18] ? row.slic
 const FORWARD = withEyes(FORWARD_EYES);
 const TALK = [2, 4, 1, 5, 3, 1, 4, 2, 5, 3];
 // The panel reserves the enlarged bubble's width in every state, so the head never shifts.
-const CELL = 1.5, BUBBLE_SCALE = 1.2, GAP = 8;
+const CELL = 1.5, BUBBLE_SCALE = 1.2, GAP = 8, CARET_GAP = 12;
 const dcanvas = document.getElementById("dcanvas");
 dcanvas.width = (38 + Math.ceil(23 * BUBBLE_SCALE)) * CELL + 4; dcanvas.height = 45 * CELL;
 const dctx = dcanvas.getContext("2d");
@@ -305,7 +305,7 @@ function render(t) {
     w.style.opacity = ease; w.style.transform = `translateY(${(1 - ease) * 24}px)`;
   });
 
-  // Dictator: centred on the caret, 8 pt below it so the text above stays readable, kept inside the Notes window.
+  // Dictator: centred on the caret, 12 pt below it so the text above stays readable, kept inside the Notes window.
   const d = document.getElementById("dictator");
   if (st.face && st.scale > 0) {
     drawDictator(st.face, st.dots);
@@ -313,7 +313,7 @@ function render(t) {
     const win = document.getElementById("notes").getBoundingClientRect();
     const left = Math.min(Math.max(caret.left + caret.width / 2 - dcanvas.width / 2, win.left + GAP), win.right - dcanvas.width - GAP);
     d.style.left = `${Math.round(left)}px`;
-    d.style.top = `${Math.round(caret.bottom + GAP)}px`;
+    d.style.top = `${Math.round(caret.bottom + CARET_GAP)}px`;
     const s = st.scale, pop = s < 1 ? s * (1 + 0.12 * Math.sin(s * Math.PI)) : 1;
     d.style.opacity = Math.min(1, s * 1.5); d.style.transform = `scale(${pop})`;
   } else d.style.opacity = 0;
