@@ -147,7 +147,7 @@ final class TerminalConsole {
             wasTrusted = controller.accessibilityTrusted
             if interactive, started { layout() }
             if wasTrusted {
-                emit(Style.color(theme.success, "✓ ") + "Accessibility is on: text is typed into the field for you.")
+                emit(Style.color(theme.success, "✓ ") + "Accessibility granted. Your words now go straight into the field, as the people always wanted.")
             }
         }
         if interactive { if started { drawBlock() } } else { plainStatus() }
@@ -740,8 +740,8 @@ final class TerminalConsole {
     }
 
     private var translationSummary: String {
-        guard let target = controller.translationTarget else { return "Translation is off." }
-        return "Translating into " + Style.bold(DictationTranslator.name(target)) + ". Speak in any language."
+        guard let target = controller.translationTarget else { return "Translation is off. Every language may speak for itself again." }
+        return "Translating into " + Style.bold(DictationTranslator.name(target)) + ". All languages are welcome; only one is official."
     }
 
     private func copy(_ line: String, _ argument: String?) {

@@ -57,20 +57,21 @@ Requires a Mac with Apple Silicon (M1 or later) and macOS 15 or later.
 | Where your audio goes | Nowhere. Transcribed on your Mac, then deleted | Often a cloud service |
 | Hallucinated "Thank you." in silence | Filtered out before transcription | Common with Whisper-based apps |
 
-## The regime in brief
+## Official decrees
 
 - **One leader, one key.** Tap Right Command and the Dictator takes the floor. Tap it again and
   your words are decreed into whatever field you were typing in. Or hold it while you speak.
-- **No foreign interference.** The speech model lives on your Mac. Not a syllable crosses the
-  border.
-- **No paperwork.** The palace is a folder. Run it from Terminal, close the tab to dissolve
+- **No foreign interference.** Your speech is processed domestically. Not a single syllable has
+  applied for a visa.
+- **No paperwork.** The palace is a folder. Run it from Terminal; close the tab to dissolve
   parliament.
-- **The ministry of commands.** `/mic` reassigns the microphone, `/copy` recovers any of your
-  last five speeches for the archives. Type `/` to see the full constitution.
+- **The ministry of commands.** `/mic` appoints a new microphone, `/copy` retrieves any of your
+  last five speeches from the archives. Type `/` to read the full constitution.
+- **All languages are welcome.** `/translate` inserts what you say in the one you choose.
+  Only one is official.
 - **Silence is not consent.** A clip with no voice in it stays silent: no phantom "Thank you"
   or "Yeah". Silence before and after your words is cut before transcription.
-- **Failures are erased from history.** The audio is deleted, and the Dictator apologises.
-  In his own way.
+- **Failures never happened.** The audio is deleted, and the Dictator issues a statement.
 
 > *"The microphone has left on a voluntary vacation. Appoint a replacement with /mic."*
 > *"The listening ministry worked a full shift and heard nothing. They have been commended."*
