@@ -24,15 +24,15 @@ That makes it a practical option for work Macs where installing apps requires IT
 Transcription runs locally on your Mac. Your audio stays on the device and is deleted afterwards.
 It's free and open source, with no subscription.
 
-Tap Right Command or Ctrl+Space, speak, and the text lands where you were typing.
-You can even choose a language with `/translate`, and Dictator automatically translates your dictation
-before inserting the text (requires macOS 26+).
-
 <p align="center">
   <a href="assets/dictator-demo.mp4">
     <img src="assets/dictator-demo.gif" width="800" alt="Dictating to an agent: the pixel Dictator appears at the chat composer, the text is inserted and sent, the agent answers, and each dictation shows up in the Dictator Terminal window">
   </a>
 </p>
+
+Tap Right Command or Ctrl+Space, speak, and the text lands where you were typing.
+You can even choose a language with `/translate`, and Dictator automatically translates your dictation
+before inserting the text (requires macOS 26+).
 
 ## Get it
 
