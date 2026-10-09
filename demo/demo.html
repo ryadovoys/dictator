@@ -1,0 +1,348 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Dictator demo</title>
+<style>
+  :root {
+    /* Primitives */
+    --color-black: #000000;
+    --color-ink-900: #0d0d0d;
+    --color-ink-800: #161616;
+    --color-ink-700: #242424;
+    --color-ink-600: #333333;
+    --color-grey-500: #8a8a8a;
+    --color-white: #f2f2f2;
+    --color-red-500: #ff2d2d;
+    --color-green-500: #22c55e;
+    --color-traffic-red: #ff5f57;
+    --color-traffic-yellow: #febc2e;
+    --color-traffic-green: #28c840;
+
+    --font-mono: "SF Mono", Menlo, Monaco, monospace;
+    --font-sans: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+    --font-size-term: 15px;
+    --line-height-term: 21px;
+    --font-size-key: 18px;
+    --font-size-tagline: 44px;
+    --font-size-sub: 22px;
+
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 22px;
+
+    --radius-window: 12px;
+    --radius-key: 10px;
+    --shadow-window: 0 30px 80px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+
+    /* Semantic */
+    --color-stage: var(--color-black);
+    --color-window: var(--color-ink-900);
+    --color-titlebar: var(--color-ink-800);
+    --color-text: var(--color-white);
+    --color-muted: var(--color-grey-500);
+    --color-recording: var(--color-red-500);
+    --color-ready: var(--color-green-500);
+    --color-key-bg: var(--color-ink-700);
+    --color-key-border: var(--color-ink-600);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 800px; overflow: hidden; background: var(--color-stage); }
+  #stage { position: relative; width: 1280px; height: 800px; background:
+      radial-gradient(ellipse at 50% 40%, #121212 0%, var(--color-stage) 70%); }
+
+  #window { position: absolute; left: 160px; top: 70px; width: 960px; height: 640px;
+    background: var(--color-window); border-radius: var(--radius-window); box-shadow: var(--shadow-window);
+    overflow: hidden; transform-origin: 50% 50%; }
+  #titlebar { height: 34px; background: var(--color-titlebar); display: flex; align-items: center;
+    padding: 0 var(--space-3); border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; }
+  .light { width: 12px; height: 12px; border-radius: 50%; margin-right: var(--space-2); }
+  #titlebar .title { position: absolute; left: 0; right: 0; text-align: center; font: 600 13px var(--font-sans);
+    color: var(--color-muted); pointer-events: none; }
+  #screen { padding: var(--space-3) var(--space-4); font: var(--font-size-term)/var(--line-height-term) var(--font-mono);
+    color: var(--color-text); white-space: pre; font-variant-ligatures: none; }
+  .row { height: var(--line-height-term); overflow: hidden; }
+  .m { color: var(--color-muted); }
+  .b { font-weight: 700; }
+  .red { color: var(--color-recording); }
+  .green { color: var(--color-ready); }
+  .cursor { background: var(--color-text); color: var(--color-window); }
+  .wm { font-weight: 700; line-height: var(--line-height-term); }
+
+  #dictator { position: absolute; left: 995px; top: 26px; transform-origin: 20% 80%; }
+  #dictator canvas { display: block; image-rendering: pixelated; filter: drop-shadow(0 10px 24px rgba(0,0,0,0.6)); }
+
+  #keys { position: absolute; left: 0; right: 0; top: 728px; display: flex; justify-content: center; gap: var(--space-3); }
+  .key { font: 600 var(--font-size-key) var(--font-sans); color: var(--color-text); background: var(--color-key-bg);
+    border: 1px solid var(--color-key-border); border-bottom-width: 3px; border-radius: var(--radius-key);
+    padding: 7px 16px; min-width: 46px; text-align: center; }
+  .key small { font-weight: 500; color: var(--color-muted); font-size: 14px; margin-left: 6px; }
+
+  #outro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.94); opacity: 0; }
+  #outro canvas { image-rendering: pixelated; margin-bottom: var(--space-5); }
+  #outro h1 { font: 800 var(--font-size-tagline) var(--font-sans); color: var(--color-text); letter-spacing: -0.5px; }
+  #outro p { font: 600 var(--font-size-sub) var(--font-sans); color: var(--color-muted); margin-top: var(--space-3); }
+  #outro code { font: 600 17px var(--font-mono); color: var(--color-text); background: var(--color-ink-800);
+    border: 1px solid var(--color-key-border); border-radius: 8px; padding: 10px 16px; margin-top: var(--space-5); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="window">
+    <div id="titlebar">
+      <div class="light" style="background:var(--color-traffic-red)"></div>
+      <div class="light" style="background:var(--color-traffic-yellow)"></div>
+      <div class="light" style="background:var(--color-traffic-green)"></div>
+      <div class="title" id="wtitle">Tools — zsh — 100×27</div>
+    </div>
+    <div id="screen"></div>
+  </div>
+  <div id="dictator"><canvas id="dcanvas"></canvas></div>
+  <div id="keys"></div>
+  <div id="outro">
+    <canvas id="ocanvas"></canvas>
+    <h1>Take control of your agents.</h1>
+    <p>A local dictation CLI for Mac</p>
+  </div>
+</div>
+<script>
+const PIXELS = {"faces": [[".......................................", ".......................................", ".......................................", ".......................................", ".......................................", "...........wwwwwwwwwwwww...............", ".........wwwkkkkkkkkkkkwwwwwwww........", "........wwkkkkkkkkkkkkkkkkkkkkwww......", "......wwwkkkkwwwwwwwwwkkkkkkkkkkww.....", ".....wwkkkkwwwkkkkkkkkkkkkkkkkkkkww....", "....wwkkkwwwkkkkkkkkkkkkkkkkkkkkkkww...", "...wwkkkwwkkkkkkkkkkkkkkkkkkkkkkkkkww..", "...wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw..", "...wkkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkkw..", "...wwkkkkkkkkkkkkkkkkkkkkkkwkwkkkkkkw..", "....wkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkww..", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw...", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkww...", ".....wwkkkkkkkkwwwwwwwwwwwwwwwwwwkwww..", "....wwkkkkkkkkkwwwwkkwwwwwwwwwwwkkkkw..", "....wkkkkkkkkkkwwwwwkkkwwwwwwwwkkkwkww.", "....wkkkkkkkkkwwwwwwwkkkkwwkwwkkwwwkkw.", "...wwkkkkkkkkkwwwwwwwwwkkkkkkkkwkkkkkw.", "...wkkkkkkkkkkwwwkkkkkkkkkkwkkkkkkkkww.", "..wwkkwwwkkkkkwwwwwwwwkkkwwwkkwwwkkkw..", "..wkkwwwwwwkkkwwwwwwwwkkkwwwwkwwwkkww..", "..wkkwkkkwwkkkwwwwwwwwwwwwwwwkkwwwkww..", "..wkkwwkkwwwwwwwwwwwkkkkwwwwwwkkwkkwww.", "..wkkwwkkwwwwwwwwwwwwwwwwwwwwwwkwwkkww.", "..wkkkwkkwwwwwwwwwwwwwwwwkkkkkkkwwwkkw.", "..wwkkwwkwwwwwwwwwwwwwwkkkkkkkkwwwwkkw.", "...wkkwwwwkkwwwwwwwwwwkkkkkkkkkkkwwkkw.", "...wwkkkkkkkwwwwwwwwwkkkkkkkkkkkkkwkkw.", "....wwkkkkkkwwwwwwwwkkkkkwwwwwkkkkwkkw.", ".....wwkkkwwwwwwwwwwkkkwwwwwwwwwkkwkkw.", "......wkkkwwwwwwwwwwkkwwwkkkkkwwwkkkkw.", "......wwkkwwwkwwwwwwwwwwwwwwwwwwwwkkww.", ".......wwkwwwkwwwwwwwwwwwwwwwwwwwkkkw..", "........wkkwwkkwwwwwwwwwwwwwwwwwkkkww..", "........wwkkwwkkwwwwwwwwwwwwwwwwkkkw...", ".........wwkkkkkkkwwwwwwwwwwwwwkkkww...", "..........wwkkkkkkkkkwwwwwwwwwkkkww....", "...........wwwwwkkkkkkkkkkkkkkkkww.....", "...............wwwwkkkkkkkkkkkkww......", "..................wwwwwwwwwwwwww......."], [".......................................", ".......................................", ".......................................", ".......................................", ".......................................", "...........wwwwwwwwwwwww...............", ".........wwwkkkkkkkkkkkwwwwwwww........", "........wwkkkkkkkkkkkkkkkkkkkkwww......", "......wwwkkkkwwwwwwwwwkkkkkkkkkkww.....", ".....wwkkkkwwwkkkkkkkkkkkkkkkkkkkww....", "....wwkkkwwwkkkkkkkkkkkkkkkkkkkkkkww...", "...wwkkkwwkkkkkkkkkkkkkkkkkkkkkkkkkww..", "...wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw..", "...wkkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkkw..", "...wwkkkkkkkkkkkkkkkkkkkkkkwkwkkkkkkw..", "....wkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkww..", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw...", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkww...", ".....wwkkkkkkkkwwwwwwwwwwwwwwwwwwkwww..", "....wwkkkkkkkkkwwwwkkwwwwwwwwwwwkkkkw..", "....wkkkkkkkkkkwwwwwkkkwwwwwwwwkkkwkww.", "....wkkkkkkkkkwwwwwwwkkkkwwkwwkkwwwkkw.", "...wwkkkkkkkkkwwwwwwwwwkkkkkkkkwkkkkkw.", "...wkkkkkkkkkkwwwkkkkkkkkkkwkkkkkkkkww.", "..wwkkwwwkkkkkwwwwwwwwkkkwwwkkwwwkkkw..", "..wkkwwwwwwkkkwwwwwwwwkkkwwwwkwwwkkww..", "..wkkwkkkwwkkkwwwwwwwwwwwwwwwkkwwwkww..", "..wkkwwkkwwwwwwwwwwwkkkkwwwwwwkkwkkwww.", "..wkkwwkkwwwwwwwwwwwwwwwwwwwwwwkwwkkww.", "..wkkkwkkwwwwwwwwwwwwwwwwkkkkkkkwwwkkw.", "..wwkkwwkwwwwwwwwwwwwwwkkkkkkkkwwwwkkw.", "...wkkwwwwkkwwwwwwwwwwkkkkkkkkkkkwwkkw.", "...wwkkkkkkkwwwwwwwwwkkkkkkkkkkkkkwkkw.", "....wwkkkkkkwwwwwwwwkkkkkwwwwwkkkkwkkw.", ".....wwkkkwwwwwwwwwwkkkwwkkkkkwwkkwkkw.", "......wkkkwwwwwwwwwwkkwwkkkkkkwwwkkkkw.", "......wwkkwwwkwwwwwwwwwwwwwwwwwwwwkkww.", ".......wwkwwwkwwwwwwwwwwwwwwwwwwwkkkw..", "........wkkwwkkwwwwwwwwwwwwwwwwwkkkww..", "........wwkkwwkkwwwwwwwwwwwwwwwkkkkw...", ".........wwkkkkkkkwwwwwwwwwwwwkkwkww...", "..........wwkkkkkkkkkwwwwwwwwwkkkww....", "...........wwwwwkkkkkkkkkkkkkkkkww.....", "...............wwwwkkkkkkkkkkkkww......", "..................wwwwwwwwwwwwww......."], [".......................................", ".......................................", ".......................................", ".......................................", ".......................................", "...........wwwwwwwwwwwww...............", ".........wwwkkkkkkkkkkkwwwwwwww........", "........wwkkkkkkkkkkkkkkkkkkkkwww......", "......wwwkkkkwwwwwwwwwkkkkkkkkkkww.....", ".....wwkkkkwwwkkkkkkkkkkkkkkkkkkkww....", "....wwkkkwwwkkkkkkkkkkkkkkkkkkkkkkww...", "...wwkkkwwkkkkkkkkkkkkkkkkkkkkkkkkkww..", "...wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw..", "...wkkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkkw..", "...wwkkkkkkkkkkkkkkkkkkkkkkwkwkkkkkkw..", "....wkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkww..", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw...", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkww...", ".....wwkkkkkkkkwwwwwwwwwwwwwwwwwwkwww..", "....wwkkkkkkkkkwwwwkkwwwwwwwwwwwkkkkw..", "....wkkkkkkkkkkwwwwwkkkwwwwwwwwkkkwkww.", "....wkkkkkkkkkwwwwwwwkkkkwwkwwkkwwwkkw.", "...wwkkkkkkkkkwwwwwwwwwkkkkkkkkwkkkkkw.", "...wkkkkkkkkkkwwwkkkkkkkkkkwkkkkkkkkww.", "..wwkkwwwkkkkkwwwwwwwwkkkwwwkkwwwkkkw..", "..wkkwwwwwwkkkwwwwwwwwkkkwwwwkwwwkkww..", "..wkkwkkkwwkkkwwwwwwwwwwwwwwwkkwwwkww..", "..wkkwwkkwwwwwwwwwwwkkkkwwwwwwkkwkkwww.", "..wkkwwkkwwwwwwwwwwwwwwwwwwwwwwkwwkkww.", "..wkkkwkkwwwwwwwwwwwwwwwwkkkkkkkwwwkkw.", "..wwkkwwkwwwwwwwwwwwwwwkkkkkkkkwwwwkkw.", "...wkkwwwwkkwwwwwwwwwwkkkkkkkkkkkwwkkw.", "...wwkkkkkkkwwwwwwwwwkkkkkkkkkkkkkwkkw.", "....wwkkkkkkwwwwwwwwkkkkkwwwwwkkkkwkkw.", ".....wwkkkwwwwwwwwwwkkkwkkkkkkwkkkwkkw.", "......wkkkwwwwwwwwwwkkwwkkkkkkwwwkkkkw.", "......wwkkwwwkwwwwwwwwwwkkkkkkwwwwkkww.", ".......wwkwwwkwwwwwwwwwwkwwwwkwwwkkkw..", "........wkkwwkkwwwwwwwwwkkkkkkwwkkkww..", "........wwkkwwkkwwwwwwwwwwwwwwwkkkkw...", ".........wwkkkkkkkwwwwwwwwwwwwkkkkww...", "..........wwkkkkkkkkkwwwwwwwwwkkkww....", "...........wwwwwkkkkkkkkkkkkkkkkww.....", "...............wwwwkkkkkkkkkkkkww......", "..................wwwwwwwwwwwwww......."], [".......................................", ".......................................", ".......................................", ".......................................", ".......................................", "...........wwwwwwwwwwwww...............", ".........wwwkkkkkkkkkkkwwwwwwww........", "........wwkkkkkkkkkkkkkkkkkkkkwww......", "......wwwkkkkwwwwwwwwwkkkkkkkkkkww.....", ".....wwkkkkwwwkkkkkkkkkkkkkkkkkkkww....", "....wwkkkwwwkkkkkkkkkkkkkkkkkkkkkkww...", "...wwkkkwwkkkkkkkkkkkkkkkkkkkkkkkkkww..", "...wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw..", "...wkkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkkw..", "...wwkkkkkkkkkkkkkkkkkkkkkkwkwkkkkkkw..", "....wkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkww..", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw...", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkww...", ".....wwkkkkkkkkwwwwwwwwwwwwwwwwwwkwww..", "....wwkkkkkkkkkwwwwkkwwwwwwwwwwwkkkkw..", "....wkkkkkkkkkkwwwwwkkkwwwwwwwwkkkwkww.", "....wkkkkkkkkkwwwwwwwkkkkwwkwwkkwwwkkw.", "...wwkkkkkkkkkwwwwwwwwwkkkkkkkkwkkkkkw.", "...wkkkkkkkkkkwwwkkkkkkkkkkwkkkkkkkkww.", "..wwkkwwwkkkkkwwwwwwwwkkkwwwkkwwwkkkw..", "..wkkwwwwwwkkkwwwwwwwwkkkwwwwkwwwkkww..", "..wkkwkkkwwkkkwwwwwwwwwwwwwwwkkwwwkww..", "..wkkwwkkwwwwwwwwwwwkkkkwwwwwwkkwkkwww.", "..wkkwwkkwwwwwwwwwwwwwwwwwwwwwwkwwkkww.", "..wkkkwkkwwwwwwwwwwwwwwwwkkkkkkkwwwkkw.", "..wwkkwwkwwwwwwwwwwwwwwkkkkkkkkkwwwkkw.", "...wkkwwwwkkwwwwwwwwwwkkkkkkkkkkkwwkkw.", "...wwkkkkkkkwwwwwwwwwkkkkkkkkkkkkkwkkw.", "....wwkkkkkkwwwwwwwwkkkkkwwwwwkkkkwkkw.", ".....wwkkkwwwwwwwwwwkkkwkkkkkkwkkkwkkw.", "......wkkkwwwwwwwwwwkkwwkkkkkkwwkkkkkw.", "......wwkkwwwkwwwwwwwwwkkkkkkkwwwwkkww.", ".......wwkwwwkwwwwwwwwwkkkkkkkwwwkkkw..", "........wkkwwkkwwwwwwwwkwwwwkkwwwkkww..", "........wwkkwwkkwwwwwwwkwwwwkkwwkkkw...", ".........wwkkkkkkkwwwwwkkkkkkkwwkkww...", "..........wwkkkkkkkkkwwwwwwwwwkkkww....", "...........wwwwwkkkkkkkkkkkkkkkkww.....", "...............wwwwkkkkkkkkkkkkww......", "..................wwwwwwwwwwwwww......."], [".......................................", ".......................................", ".......................................", ".......................................", ".......................................", "...........wwwwwwwwwwwww...............", ".........wwwkkkkkkkkkkkwwwwwwww........", "........wwkkkkkkkkkkkkkkkkkkkkwww......", "......wwwkkkkwwwwwwwwwkkkkkkkkkkww.....", ".....wwkkkkwwwkkkkkkkkkkkkkkkkkkkww....", "....wwkkkwwwkkkkkkkkkkkkkkkkkkkkkkww...", "...wwkkkwwkkkkkkkkkkkkkkkkkkkkkkkkkww..", "...wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw..", "...wkkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkkw..", "...wwkkkkkkkkkkkkkkkkkkkkkkwkwkkkkkkw..", "....wkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkww..", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw...", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkww...", ".....wwkkkkkkkkwwwwwwwwwwwwwwwwwwkwww..", "....wwkkkkkkkkkwwwwkkwwwwwwwwwwwkkkkw..", "....wkkkkkkkkkkwwwwwkkkwwwwwwwwkkkwkww.", "....wkkkkkkkkkwwwwwwwkkkkwwkwwkkwwwkkw.", "...wwkkkkkkkkkwwwwwwwwwkkkkkkkkwkkkkkw.", "...wkkkkkkkkkkwwwkkkkkkkkkkwkkkkkkkkww.", "..wwkkwwwkkkkkwwwwwwwwkkkwwwkkwwwkkkw..", "..wkkwwwwwwkkkwwwwwwwwkkkwwwwkwwwkkww..", "..wkkwkkkwwkkkwwwwwwwwwwwwwwwkkwwwkww..", "..wkkwwkkwwwwwwwwwwwkkkkwwwwwwkkwkkwww.", "..wkkwwkkwwwwwwwwwwwwwwwwwwwwwwkwwkkww.", "..wkkkwkkwwwwwwwwwwwwwwwwkkkkkkwwwwkkw.", "..wwkkwwkwwwwwwwwwwwwwwwkkkkkkkkwwwkkw.", "...wkkwwwwkkwwwwwwwwwwwkkkkkkkkkkwwkkw.", "...wwkkkkkkkwwwwwwwwwwkkkkkwwkkkkkwkkw.", "....wwkkkkkkwwwwwwwwwkkkkwwkkwwkkkwkkw.", ".....wwkkkwwwwwwwwwwwkkkwwkkkkwwkkwkkw.", "......wkkkwwwwwwwwwwwwwwwwkkkkwwwkkkkw.", "......wwkkwwwkwwwwwwwwwwwwkkkkwwwwkkww.", ".......wwkwwwkwwwwwwwwwwwwwkkwwwwkkkw..", "........wkkwwkkwwwwwwwwwwwwwwwwwwkkww..", "........wwkkwwkkwwwwwwwwwwwwwwwwkkkw...", ".........wwkkkkkkkwwwwwwwwwwwwwkkkww...", "..........wwkkkkkkkkkwwwwwwwwwkkkww....", "...........wwwwwkkkkkkkkkkkkkkkkww.....", "...............wwwwkkkkkkkkkkkkww......", "..................wwwwwwwwwwwwww......."], [".......................................", ".......................................", ".......................................", ".......................................", ".......................................", "...........wwwwwwwwwwwww...............", ".........wwwkkkkkkkkkkkwwwwwwww........", "........wwkkkkkkkkkkkkkkkkkkkkwww......", "......wwwkkkkwwwwwwwwwkkkkkkkkkkww.....", ".....wwkkkkwwwkkkkkkkkkkkkkkkkkkkww....", "....wwkkkwwwkkkkkkkkkkkkkkkkkkkkkkww...", "...wwkkkwwkkkkkkkkkkkkkkkkkkkkkkkkkww..", "...wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw..", "...wkkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkkw..", "...wwkkkkkkkkkkkkkkkkkkkkkkwkwkkkkkkw..", "....wkkkkkkkkkkkkkkkkkkkkkkwwwkkkkkww..", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkkw...", ".....wkkkkkkkkkkkkkkkkkkkkkkkkkkkkww...", ".....wwkkkkkkkkwwwwwwwwwwwwwwwwwwkwww..", "....wwkkkkkkkkkwwwwkkwwwwwwwwwwwkkkkw..", "....wkkkkkkkkkkwwwwwkkkwwwwwwwwkkkwkww.", "....wkkkkkkkkkwwwwwwwkkkkwwkwwkkwwwkkw.", "...wwkkkkkkkkkwwwwwwwwwkkkkkkkkwkkkkkw.", "...wkkkkkkkkkkwwwkkkkkkkkkkwkkkkkkkkww.", "..wwkkwwwkkkkkwwwwwwwwkkkwwwkkwwwkkkw..", "..wkkwwwwwwkkkwwwwwwwwkkkwwwwkwwwkkww..", "..wkkwkkkwwkkkwwwwwwwwwwwwwwwkkwwwkww..", "..wkkwwkkwwwwwwwwwwwkkkkwwwwwwkkwkkwww.", "..wkkwwkkwwwwwwwwwwwwwwwwwwwwwwkwwkkww.", "..wkkkwkkwwwwwwwwwwwwwwwwkkkkkkkwwwkkw.", "..wwkkwwkwwwwwwwwwwwwwwkkkkkkkkkwwwkkw.", "...wkkwwwwkkwwwwwwwwwwkkkkkkkkkkkwwkkw.", "...wwkkkkkkkwwwwwwwwwkkkkkkkkkkkkkwkkw.", "....wwkkkkkkwwwwwwwwkkkkkwwwwwkkkkwkkw.", ".....wwkkkwwwwwwwwwwkkkwwwwwwwwwkkwkkw.", "......wkkkwwwwwwwwwwkkwkkkkkkkkwwkkkkw.", "......wwkkwwwkwwwwwwwwwkwwwwwwkwwwkkww.", ".......wwkwwwkwwwwwwwwkkkkkkkkkwwkkkw..", "........wkkwwkkwwwwwwwwwwwwwwwwwwkkww..", "........wwkkwwkkwwwwwwwwwwwwwwwwwkkw...", ".........wwkkkkkkkwwwwwwwwwwwwwwkkww...", "..........wwkkkkkkkkkwwwwwwwwwkkkww....", "...........wwwwwkkkkkkkkkkkkkkkkww.....", "...............wwwwkkkkkkkkkkkkww......", "..................wwwwwwwwwwwwww......."]], "bubbles": [["....wwwwwwwwwwwwwww....", "...wwkkkkkkkkkkkkkww...", "..wwkwwwwwwwwwwwwwkww..", ".wwkwwwwwwwwwwwwwwwkww.", ".wkwwwwwwwwwwwwwwwwwkw.", ".wkwwwkkwwwwwwwwwwwwkw.", ".wkwwwkkwwwwwwwwwwwwkw.", ".wkwwwwwwwwwwwwwwwwwkw.", ".wwkwwwwwwwwwwwwwwwkww.", "..wwkwwwwwwwwwwwwwkww..", "..wwkkkwkkkkkkkkkkkww..", ".wwkwkkwwwwwwwwwwwww...", "wwkkwww................", "wkkww..................", "www...................."], ["....wwwwwwwwwwwwwww....", "...wwkkkkkkkkkkkkkww...", "..wwkwwwwwwwwwwwwwkww..", ".wwkwwwwwwwwwwwwwwwkww.", ".wkwwwwwwwwwwwwwwwwwkw.", ".wkwwwkkwwkkwwwwwwwwkw.", ".wkwwwkkwwkkwwwwwwwwkw.", ".wkwwwwwwwwwwwwwwwwwkw.", ".wwkwwwwwwwwwwwwwwwkww.", "..wwkwwwwwwwwwwwwwkww..", "..wwkkkwkkkkkkkkkkkww..", ".wwkwkkwwwwwwwwwwwww...", "wwkkwww................", "wkkww..................", "www...................."], ["....wwwwwwwwwwwwwww....", "...wwkkkkkkkkkkkkkww...", "..wwkwwwwwwwwwwwwwkww..", ".wwkwwwwwwwwwwwwwwwkww.", ".wkwwwwwwwwwwwwwwwwwkw.", ".wkwwwkkwwkkwwkkwwwwkw.", ".wkwwwkkwwkkwwkkwwwwkw.", ".wkwwwwwwwwwwwwwwwwwkw.", ".wwkwwwwwwwwwwwwwwwkww.", "..wwkwwwwwwwwwwwwwkww..", "..wwkkkwkkkkkkkkkkkww..", ".wwkwkkwwwwwwwwwwwww...", "wwkkwww................", "wkkww..................", "www...................."]]};
+const COLS = 100, ROWS = 27, BLOCK = 4, REGION = ROWS - BLOCK;
+const MIC_DEFAULT = "MacBook Pro Microphone", MIC_NEW = "Shure MV7";
+
+// ---- Pixel Dictator ---------------------------------------------------------
+function drawGrid(ctx, grid, ox, oy, cell) {
+  grid.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch === ".") return;
+    ctx.fillStyle = ch === "k" ? "#000" : "#fff";
+    ctx.fillRect(Math.floor(ox + x * cell), Math.floor(oy + y * cell), Math.ceil(cell + 0.25), Math.ceil(cell + 0.25));
+  }));
+}
+const CELL = 4, BUBBLE_SCALE = 1.2;
+const dcanvas = document.getElementById("dcanvas");
+dcanvas.width = (38 + Math.ceil(23 * BUBBLE_SCALE)) * CELL + 4; dcanvas.height = 45 * CELL;
+const dctx = dcanvas.getContext("2d");
+function drawDictator(face, dots) {
+  dctx.clearRect(0, 0, dcanvas.width, dcanvas.height);
+  drawGrid(dctx, PIXELS.faces[face], 0, 0, CELL);
+  if (dots > 0) drawGrid(dctx, PIXELS.bubbles[dots - 1], 38 * CELL, 5 * CELL, CELL * BUBBLE_SCALE);
+}
+const ocanvas = document.getElementById("ocanvas");
+ocanvas.width = 39 * 4; ocanvas.height = 45 * 4;
+// Eyes looking forward (PixelArt.restingFaces[forward], CharacterEyes.swift), pasted at cell (15, 18).
+const FORWARD_EYES = ["wwwwwwwwwwwwwwwwwwkw", "wwwwkkwwwwwwwwwwwkkk", "wwwwwkkkwwwwwwwwkkkk", "wwwwwwkkkkwwkwwkkwwk",
+  "wwwwwwwwkkkkkkkkwwkk", "wwkkkkkkkkkkwkkkkkkk", "wwwwwkkwwwwwwkwkkwwk", "wwwwwkkwwwwwwwwkkwwk",
+  "wwwwwwwwwwwwwwkwwwwk", "wwwwwkkkkwwwwwwkkwkk", "wwwwwwwwwwwwwwwwkwwk"];
+const BLINK_EYES = ["wwwwwwwwwwwwwwwwwwkw", "wwwwkkwwwwwwwwwwwkkk", "wwwwwkkkwwwwwwwwkkkk", "wwwwwwkkkkwwkwwkkwwk",
+  "wwwwwwwwkkkkkkkkwwwk", "wwwwwwwwwwwwwkwwwwwk", "wwwkkkkkkkwwwkwkkkkk", "wwwwwwwwwwwwwwwwwwwk",
+  "wwwwwwwwwwwwwwkkwwwk", "wwwwwkkkkwwwwwwkkwkk", "wwwwwwwwwwwwwwwwkwwk"];
+const withEyes = eyes => PIXELS.faces[0].map((row, y) => eyes[y - 18] ? row.slice(0, 15) + eyes[y - 18] + row.slice(35) : row);
+const forwardFace = withEyes(FORWARD_EYES), blinkFace = withEyes(BLINK_EYES);
+const octx = ocanvas.getContext("2d");
+function drawOutroFace(blink) { octx.clearRect(0, 0, ocanvas.width, ocanvas.height); drawGrid(octx, blink ? blinkFace : forwardFace, 0, 0, 4); }
+const TALK = [2, 4, 1, 5, 3, 1, 4, 2, 5, 3];
+
+// ---- Text helpers -----------------------------------------------------------
+// A line is an array of [text, class] segments.
+const S = (text, cls = "") => [text, cls];
+const width = segs => segs.reduce((n, [t]) => n + [...t].length, 0);
+function wrap(segs, limit = COLS - 1) {
+  if (width(segs) <= limit) return [segs];
+  const plain = segs.map(s => s[0]).join("");
+  let indent = plain.match(/^ */)[0].length;
+  const rest = plain.slice(indent);
+  if ("⏺⎿›".includes(rest[0]) && rest[1] === " ") indent += 2;
+  // Flatten to characters with classes, then break at spaces.
+  const chars = segs.flatMap(([t, c]) => [...t].map(ch => [ch, c]));
+  const lines = []; let start = 0, first = true;
+  while (start < chars.length) {
+    const room = first ? limit : limit - indent;
+    let end = Math.min(chars.length, start + room);
+    if (end < chars.length) { let sp = end; while (sp > start && chars[sp][0] !== " ") sp--; if (sp > start) end = sp; }
+    let line = chars.slice(start, end);
+    if (!first) line = [...Array(indent)].map(() => [" ", ""]).concat(line);
+    lines.push(line.map(([ch, c]) => [ch, c]));
+    start = end; while (start < chars.length && chars[start][0] === " ") start++;
+    first = false;
+  }
+  return lines;
+}
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const html = segs => segs.map(([t, c]) => c ? `<span class="${c}">${esc(t)}</span>` : esc(t)).join("");
+const typed = (text, t0, t1, t) => text.slice(0, Math.max(0, Math.min(text.length, Math.floor((t - t0) / (t1 - t0) * text.length + 1e-6))));
+
+// ---- Timeline ---------------------------------------------------------------
+const TEXT1 = "Remind me to buy oat milk and send the deck to Anna before Friday.";
+const TEXT2 = "Let's move the design review to Thursday at three and invite the whole team.";
+const T = {
+  shellType: [0.9, 2.0], launch: 2.5,
+  rec1: [3.5, 6.4], done1: 7.0,
+  rec2: [7.9, 10.9], done2: 11.5,
+  slash: 12.4, mi: [13.0, 13.3], c: 13.7, enterMic: 14.3, down1: 14.9, down2: 15.4, pickMic: 16.0,
+  copyType: [17.0, 17.5], cdown1: 18.1, cdown2: 18.6, pickCopy: 19.2,
+  outro: 20.6, blink: 22.3, end: 24.4,
+};
+const KEYS = [
+  [T.shellType[1] + 0.15, 0.6, "⏎"],
+  [T.rec1[0], 0.8, "Right ⌘", "start"], [T.rec1[1], 0.8, "Right ⌘", "stop"],
+  [T.rec2[0], 0.8, "Right ⌘", "start"], [T.rec2[1], 0.8, "Right ⌘", "stop"],
+  [T.slash, 0.5, "/"], [T.enterMic, 0.5, "⏎"], [T.down1, 0.45, "↓"], [T.down2, 0.45, "↓"], [T.pickMic, 0.55, "⏎"],
+  [T.cdown1, 0.45, "↓"], [T.cdown2, 0.45, "↓"], [T.pickCopy, 0.55, "⏎"],
+];
+const COMMANDS = [
+  ["/mic", "choose a microphone, or pick number n"],
+  ["/copy", "copy the last dictation, or the n-th from the end"],
+  ["/status", "model, microphone, permissions"],
+  ["/clear", "clear the screen"],
+  ["/quit", "quit Dictator (Ctrl+C works too)"],
+];
+const MICS = [`System Default (${MIC_DEFAULT})`, "AirPods Pro", MIC_NEW];
+const snippet = s => { const cut = s.slice(0, 40); return cut.slice(0, cut.lastIndexOf(" ")).replace(/[.,]$/, "") + "…"; };
+
+const WORDMARK = [
+  "▀▀▀▀▀▀╗ ▀▀╗▀▀▀▀▀▀▀╗▀▀▀▀▀▀▀▀╗ ▀▀▀▀▀╗ ▀▀▀▀▀▀▀▀╗ ▀▀▀▀▀▀╗ ▀▀▀▀▀▀╗",
+  "▀▀╔══▀▀╗▀▀║▀▀╔════╝╚══▀▀╔══╝▀▀╔══▀▀╗╚══▀▀╔══╝▀▀╔═══▀▀╗▀▀╔══▀▀╗",
+  "▀▀║  ▀▀║▀▀║▀▀║        ▀▀║   ▀▀▀▀▀▀▀║   ▀▀║   ▀▀║   ▀▀║▀▀▀▀▀▀╔╝",
+  "▀▀║  ▀▀║▀▀║▀▀║        ▀▀║   ▀▀╔══▀▀║   ▀▀║   ▀▀║   ▀▀║▀▀╔══▀▀╗",
+  "▀▀▀▀▀▀╔╝▀▀║▀▀▀▀▀▀▀╗   ▀▀║   ▀▀║  ▀▀║   ▀▀║   ╚▀▀▀▀▀▀╔╝▀▀║  ▀▀║",
+  "╚═════╝ ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝",
+];
+
+function entry(text, seconds) {
+  return [[S("⏺ "), S(text)], [S("  ⎿ inserted · " + seconds + " · " + MIC_DEFAULT, "m")]];
+}
+function answer(command, first, more = []) {
+  return [[S(command, "b")], [S("  ⎿ ", "m"), ...first], ...more];
+}
+
+function state(t) {
+  const st = { lines: [], overlay: [], input: "", placeholder: "Type / to see commands", status: null,
+               face: -1, dots: 0, dictatorScale: 0, cursorAt: null, title: "Tools — zsh — 100×27" };
+  // Before launch: a plain zsh prompt.
+  if (t < T.launch) {
+    st.lines = [[S("Last login: Thu Oct  8 09:41:07 on ttys004", "m")],
+                [S("~/Tools % "), S(typed("./dictator/dictator", T.shellType[0], T.shellType[1], t))]];
+    st.cursorAt = 1;
+    return st;
+  }
+  st.title = "Tools — dictator — 100×27";
+  let mic = MIC_DEFAULT;
+  const L = st.lines;
+  L.push([]);
+  WORDMARK.forEach(r => L.push([S(r, "wm")]));
+  L.push([], [S("Dictator", "b"), S(" v0.3.0", "m")],
+         [S("Local speech to text, nothing leaves this Mac", "m")],
+         [S("Right Command key to dictate · Esc to cancel", "m")], []);
+  const push = block => { block.forEach(l => wrap(l).forEach(w => L.push(w))); L.push([]); };
+  if (t >= T.done1) push(entry(TEXT1, "2.9 s"));
+  if (t >= T.done2) push(entry(TEXT2, "3.0 s"));
+  if (t >= T.pickMic) { push(answer("/mic", [S("Microphone: "), S(MIC_NEW, "b")])); mic = MIC_NEW; }
+  if (t >= T.pickCopy) push(answer("/copy 2", [S("Copied: ", "green"), S(TEXT1)]));
+
+  // Status line.
+  const rec = [T.rec1, T.rec2].find(([a, b]) => t >= a && t < b);
+  const transcribing = (t >= T.rec1[1] && t < T.done1) || (t >= T.rec2[1] && t < T.done2);
+  if (rec) {
+    const s = Math.floor(t - rec[0]);
+    st.status = [S("● ", "red"), S(`Recording 0:${String(s).padStart(2, "0")} · ${mic}`, "m")];
+    // The Dictator pops in, then talks: mouth every 0.11 s, bubble dots every 0.3 s.
+    const e = t - rec[0];
+    st.dictatorScale = Math.min(1, e / 0.18);
+    const talking = e > 0.35 && (rec[1] - t) > 0.25;
+    st.face = talking ? TALK[Math.floor((e - 0.35) / 0.11) % TALK.length] : 0;
+    st.dots = talking ? 1 + Math.floor((e - 0.35) / 0.3) % 3 : 0;
+  } else if (transcribing) {
+    st.status = [S("◌ ", ""), S("Transcribing…", "m")];
+    const end = t >= T.rec2[1] ? T.rec2[1] : T.rec1[1];
+    const e = t - end;
+    st.face = 0; st.dictatorScale = Math.max(0, 1 - e / 0.2);
+  } else {
+    st.status = [S("● ", "green"), S(`Ready · ${mic}`, "m")];
+  }
+
+  // Input box, suggestions and picker.
+  const row = (label, detail, selected, mark = "") => selected
+    ? [S("▸ " + label + detail, "b"), S(mark)]
+    : [S("  " + label + detail, "m"), S(mark)];
+  const pad = (s, n) => s.padEnd(n, " ");
+  if (t >= T.slash && t < T.enterMic) {
+    let q = "/";
+    if (t >= T.mi[0]) q += typed("mi", T.mi[0], T.mi[1], t);
+    if (t >= T.c) q += "c";
+    st.input = q;
+    if (q === "/") st.overlay = COMMANDS.map(([n, d], i) => row(pad(n, 16), d, i === 0));
+    else {
+      const head = q.slice(1);
+      st.overlay = [row(pad("/mic", 16), COMMANDS[0][1], true)]
+        .concat(MICS.map((m, i) => row(pad("mic " + (i + 1), 16), m, false, i === 0 ? " ●" : "")));
+      if (head === "m") st.overlay.splice(1, 0); // same list for m / mi / mic
+    }
+  } else if (t >= T.enterMic && t < T.pickMic) {
+    const sel = t >= T.down2 ? 2 : t >= T.down1 ? 1 : 0;
+    st.placeholder = "Choose a microphone above";
+    st.overlay = MICS.map((m, i) => i === sel
+      ? [S("▸ "), S(i === 0 ? "●" : "○", i === 0 ? "" : "m"), S(" "), S(String(i + 1), "m"), S(" "), S(m, "b")]
+      : [S("  "), S(i === 0 ? "●" : "○", i === 0 ? "" : "m"), S(" "), S(String(i + 1), "m"), S(" " + m)]);
+  } else if (t >= T.copyType[0] && t < T.pickCopy) {
+    st.input = typed("copy", T.copyType[0], T.copyType[1], t);
+    if (st.input.length >= 2) {
+      const sel = t >= T.cdown2 ? 2 : t >= T.cdown1 ? 1 : 0;
+      st.overlay = [row(pad("/copy", 16), COMMANDS[1][1], sel === 0),
+                    row(pad("copy", 5), `"${snippet(TEXT2)}"`, sel === 1),
+                    row(pad("copy", 5), `"${snippet(TEXT1)}"`, sel === 2)];
+    }
+  }
+  return st;
+}
+
+// ---- Render -----------------------------------------------------------------
+const screen = document.getElementById("screen");
+function render(t) {
+  const st = state(t);
+  const rule = [S("─".repeat(COLS - 1), "m")];
+  let rows = st.lines.slice(-REGION);
+  while (rows.length < REGION) rows.push([]);
+  if (st.cursorAt !== null) rows[st.cursorAt] = [...rows[st.cursorAt], S(" ", Math.floor(t * 2) % 2 ? "" : "cursor")];
+  if (t >= T.launch) {
+    st.overlay.forEach((l, i) => { rows[REGION - st.overlay.length + i] = l; });
+    const inputLine = st.input ? [S(st.input), S(" ", "cursor")] : [S(" ", "cursor"), S(st.placeholder.slice(1), "m")];
+    if (!st.input) inputLine[0] = S(st.placeholder[0], "cursor m");
+    rows = rows.concat([rule, inputLine, rule, st.status]);
+  } else {
+    while (rows.length < ROWS) rows.push([]);
+  }
+  screen.innerHTML = rows.map(r => `<div class="row">${html(r)}</div>`).join("");
+  document.getElementById("wtitle").textContent = st.title;
+
+  // Window entrance.
+  const win = document.getElementById("window");
+  const e = Math.min(1, t / 0.6), ease = 1 - Math.pow(1 - e, 3);
+  win.style.opacity = ease; win.style.transform = `translateY(${(1 - ease) * 24}px) scale(${0.97 + 0.03 * ease})`;
+
+  // Dictator.
+  const d = document.getElementById("dictator");
+  if (st.face >= 0 && st.dictatorScale > 0) {
+    drawDictator(st.face, st.dots);
+    const s = st.dictatorScale, pop = s < 1 ? s * (1 + 0.12 * Math.sin(s * Math.PI)) : 1;
+    d.style.opacity = Math.min(1, s * 1.5); d.style.transform = `scale(${pop})`;
+  } else d.style.opacity = 0;
+
+  // Key presses.
+  document.getElementById("keys").innerHTML = KEYS
+    .filter(([at, dur]) => t >= at && t < at + dur)
+    .map(([, , k, note]) => `<div class="key">${k}${note ? `<small>${note}</small>` : ""}</div>`).join("");
+
+  // Outro.
+  const o = Math.max(0, Math.min(1, (t - T.outro) / 0.6));
+  document.getElementById("outro").style.opacity = o;
+  // One blink (0.16 s, as CharacterEyeAnimation.silent) about a second after the card settles.
+  drawOutroFace(t >= T.blink && t < T.blink + 0.16);
+}
+window.render = render;
+window.DURATION = T.end;
+render(Number(new URLSearchParams(location.search).get("t") || 0));
+</script>
+</body>
+</html>

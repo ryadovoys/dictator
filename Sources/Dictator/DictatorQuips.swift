@@ -1,0 +1,64 @@
+import Foundation
+
+/// The apology printed when a dictation fails: a line in character that fits the kind of
+/// failure, never the same twice in a row. The plain reason follows it.
+enum DictatorQuips {
+    enum Kind: CaseIterable { case silence, microphone, permission, model, other }
+
+    static let lines: [Kind: [String]] = [
+        .silence: [
+            "The people were silent. My apologies, comrade: speak up.",
+            "Not a single word reached the palace. Try again, louder.",
+            "Silence is not an order I can type. Once more, please.",
+            "Even my secret police heard nothing. Try again.",
+            "Your speech went underground. Bring it back, louder.",
+            "The ministry of listening reports: nothing. Again, with conviction.",
+        ],
+        .microphone: [
+            "The microphone has deserted its post. Check it, or pick another with /mic.",
+            "Treason! The microphone refuses to cooperate. Try another with /mic.",
+            "Our microphone is in exile. Reconnect it or choose another with /mic.",
+            "Sabotage in the ministry of audio. Sorry about that; see /mic.",
+            "The microphone failed to report for duty. Try another with /mic.",
+        ],
+        .permission: [
+            "The microphone needs papers. Allow microphone access for your terminal.",
+            "Stopped at the border: no microphone permission. Allow it in System Settings.",
+        ],
+        .model: [
+            "The speech model is still putting on its uniform. Give it a moment.",
+            "My scribes are still sharpening their pencils. One moment, please.",
+            "The ministry of transcription is not open yet. Try again shortly.",
+        ],
+        .other: [
+            "This failure will be erased from history. Please try again.",
+            "A minor coup in the transcription office. Apologies; try again.",
+            "The decree was lost in the mail. Try again, comrade.",
+            "Something went wrong, and heads will roll. Not yours. Try again.",
+            "My deepest apologies. The palace had a hiccup. Try again.",
+        ],
+    ]
+
+    static func kind(of message: String) -> Kind {
+        let text = message.lowercased()
+        if text.hasPrefix("no speech") { return .silence }
+        if text.hasPrefix("microphone access") || text.contains("restricted") { return .permission }
+        if ["not sending audio", "no microphone audio", "disconnected", "not connected", "could not be opened",
+            "did not start", "unavailable", "no microphone you chose", "could not be recorded"].contains(where: text.contains) {
+            return .microphone
+        }
+        if text.contains("model") { return .model }
+        return .other
+    }
+
+    private nonisolated(unsafe) static var last: String?
+
+    /// A line for this failure, different from the previous one.
+    static func line(for message: String) -> String {
+        let pool = lines[kind(of: message)] ?? lines[.other]!
+        let choice = pool.filter { $0 != last }.randomElement() ?? pool[0]
+        last = choice
+        return choice
+    }
+}
+
