@@ -88,6 +88,7 @@ the `/` is optional). ↑↓ choose, Tab completes, Enter runs.
 |---|---|
 | `/mic` | choose a microphone (↑↓ and Enter, or its number); `/mic 2` picks number 2 directly |
 | `/copy` | copy the last dictation; typing `copy` lists your last five to pick from |
+| `/translate` | insert what you say translated into another language, on this Mac (macOS 26+); `/translate spanish`, `/translate off` |
 | `/status` | model, microphone, permissions |
 | `/clear` | clear the screen |
 | `/accessibility` | ask macOS to let Dictator type the text for you |

@@ -19,6 +19,7 @@ final class TerminalConsole {
     private static let commands = [
         Command(name: "/mic", usage: "/mic [number]", summary: "choose a microphone, or pick number n"),
         Command(name: "/copy", usage: "/copy [n]", summary: "copy the last dictation, or the n-th from the end"),
+        Command(name: "/translate", usage: "/translate [language|off]", summary: "translate what you say into a language"),
         Command(name: "/status", usage: "/status", summary: "model, microphone, permissions"),
         Command(name: "/accessibility", usage: "/accessibility", summary: "let Dictator type the text for you"),
         Command(name: "/clear", usage: "/clear", summary: "clear the screen"),
@@ -42,6 +43,9 @@ final class TerminalConsole {
 
     // Session state.
     private var dictations: [String] = []
+    /// Languages Apple Translation can produce; loaded once at start.
+    private var translationLanguages: [DictationTranslator.Language] = []
+    private static let translationKey = "terminal.translateTo"
     private var seenDictations = 0
     private var lastFailure: String?
     private var wasTrusted = false
@@ -52,7 +56,7 @@ final class TerminalConsole {
     // history scrolls (lines leaving its top go to the terminal's scrollback as usual).
     /// The input box (3 rows) and one status line under it. Suggestions and the picker float above the box.
     private let blockHeight = 4
-    private var picker: MicrophonePicker?
+    private var picker: Picker?
     private var started = false
     /// The history wrapped to the current width; its tail is what the scroll region shows.
     private var historyLines: [String] = []
@@ -71,6 +75,7 @@ final class TerminalConsole {
         self.defaults = defaults
         let noColor = ProcessInfo.processInfo.environment["NO_COLOR"] != nil
         theme = noColor ? .mono : .dictator
+        controller.translationTarget = defaults.string(forKey: Self.translationKey)
     }
 
     static let keysHint = "Tap or hold Right Command (or ⌃Space) to dictate · Esc to cancel"
@@ -107,6 +112,7 @@ final class TerminalConsole {
         self.resize = resize
         layout()
         started = true
+        Task { translationLanguages = await DictationTranslator.languages() }
         wasTrusted = controller.accessibilityTrusted
         if !wasTrusted { requestInitialAccessibility() }
         readInput()
@@ -204,7 +210,9 @@ final class TerminalConsole {
         if let delivery = controller.lastDelivery {
             details = [delivery.outcome, String(format: "%.1f s", delivery.seconds), delivery.microphone]
         }
-        let detail = details.isEmpty ? "" : "\n" + Style.color(theme.muted, "  ⎿ " + details.joined(separator: " · "))
+        var detail = details.isEmpty ? "" : "\n" + Style.color(theme.muted, "  ⎿ " + details.joined(separator: " · "))
+        // A translation keeps what was said underneath it.
+        if let original = controller.lastOriginal { detail += "\n" + Style.color(theme.muted, "    " + original) }
         return bullet + controller.lastText + detail
     }
 
@@ -306,7 +314,11 @@ final class TerminalConsole {
             if used + w > field { break }
             shown.append(character); used += w
         }
-        let hintText = picker == nil ? "Type / to see commands" : "Choose a microphone above"
+        let hintText = switch picker?.kind {
+        case nil: "Type / to see commands"
+        case .microphone: "Choose a microphone above"
+        case .language: "Choose a language above"
+        }
         let placeholder = input.isEmpty ? Style.color(theme.muted, Style.fit(hintText, field)) : ""
         lines.append(input.isEmpty ? placeholder : shown)
         lines.append(rule)
@@ -335,6 +347,8 @@ final class TerminalConsole {
         let microphone = controller.microphoneStatus
         // Text is typed into the field; only the exception (no Accessibility) is worth a word.
         let mode = controller.accessibilityTrusted ? "" : " · clipboard"
+        // Translation changes what lands in the field, so it stays in sight while it is on.
+        let translating = controller.translationTarget.map { " · into " + DictationTranslator.name($0) } ?? ""
         let (dot, color, text): (String, TerminalTheme.RGB?, String) = switch controller.phase {
         case .recording: ("●", theme.recording, "Recording \(DictationController.duration(controller.elapsed)) · \(microphone)")
         case .starting: ("◌", theme.warning, "Starting microphone…")
@@ -349,7 +363,7 @@ final class TerminalConsole {
         case .ready:
             controller.modelLoading
                 ? ("◌", theme.warning, "Loading speech model…")
-                : ("●", theme.ready, "Ready · \(microphone)\(mode)")
+                : ("●", theme.ready, "Ready · \(microphone)\(mode)\(translating)")
         }
         return Style.color(color, dot) + " " + Style.color(theme.muted, Style.fit(text, columns - 2))
     }
@@ -383,6 +397,13 @@ final class TerminalConsole {
                 let label = "mic \(index + 1)"
                 guard rest.isEmpty || label.hasPrefix("mic " + rest) else { continue }
                 items.append(Suggestion(label: label, detail: item.title, run: "/mic \(index + 1)", active: item.active))
+            }
+        }
+        if !head.isEmpty, "translate".hasPrefix(head), DictationTranslator.isAvailable {
+            // Every language as "translate  Spanish"; a word after "translate " narrows them by name.
+            for item in languageItems() where rest.isEmpty || item.title.lowercased().hasPrefix(rest) {
+                items.append(Suggestion(label: "translate", detail: item.title,
+                                        run: "/translate " + (item.value ?? "off"), active: item.active))
             }
         }
         if !head.isEmpty, "copy".hasPrefix(head) || head == "copy" {
@@ -589,6 +610,7 @@ final class TerminalConsole {
         switch command {
         case "/mic", "/microphone": microphone(line, argument)
         case "/copy": copy(line, argument)
+        case "/translate": translate(line, argument)
         case "/status": status(line)
         case "/accessibility":
             if controller.accessibilityTrusted {
@@ -609,20 +631,24 @@ final class TerminalConsole {
         }
     }
 
-    private struct MicrophonePicker {
-        struct Item { let title: String; let uid: String?; let active: Bool }
+    /// A list above the box: microphones (`/mic`) or translation languages (`/translate`).
+    private struct Picker {
+        enum Kind { case microphone, language }
+        /// `value`: a microphone UID or a language code; nil for System Default or Off.
+        struct Item { let title: String; let value: String?; let active: Bool }
+        let kind: Kind
         var items: [Item]
         var selected: Int
     }
 
     /// `refresh: false` for suggestions, which redraw on every key: the device list is kept
     /// current by the hardware listener anyway.
-    private func microphoneItems(refresh: Bool = true) -> [MicrophonePicker.Item] {
+    private func microphoneItems(refresh: Bool = true) -> [Picker.Item] {
         if refresh { preferences.refresh() }
         let systemName = preferences.devices.first(where: \.isSystemDefault)?.name ?? "none"
-        return [MicrophonePicker.Item(title: "System Default (\(systemName))", uid: nil, active: preferences.mode == .systemDefault)]
+        return [Picker.Item(title: "System Default (\(systemName))", value: nil, active: preferences.mode == .systemDefault)]
             + preferences.devices.filter(\.isAvailable).map { device in
-                MicrophonePicker.Item(title: device.name, uid: device.uid,
+                Picker.Item(title: device.name, value: device.uid,
                                       active: preferences.mode == .specific && preferences.selectedUID == device.uid)
             }
     }
@@ -631,7 +657,7 @@ final class TerminalConsole {
     private func microphone(_ line: String, _ argument: String?) {
         let items = microphoneItems()
         guard let argument else {
-            setPicker(MicrophonePicker(items: items, selected: items.firstIndex(where: \.active) ?? 0))
+            setPicker(Picker(kind: .microphone, items: items, selected: items.firstIndex(where: \.active) ?? 0))
             return
         }
         guard let index = Int(argument), items.indices.contains(index - 1) else {
@@ -641,29 +667,38 @@ final class TerminalConsole {
         answer(line, ["Microphone: " + Style.bold(controller.microphoneStatus)])
     }
 
-    private func apply(_ item: MicrophonePicker.Item) {
-        if let uid = item.uid { preferences.mode = .specific; preferences.select(uid) } else { preferences.mode = .systemDefault }
+    private func apply(_ item: Picker.Item) {
+        if let uid = item.value { preferences.mode = .specific; preferences.select(uid) } else { preferences.mode = .systemDefault }
     }
 
     private func choosePicked(_ index: Int? = nil) {
         guard let open = picker else { return }
         let chosen = index ?? open.selected
         guard open.items.indices.contains(chosen) else { return }
-        apply(open.items[chosen])
         setPicker(nil)
-        answer("/mic", ["Microphone: " + Style.bold(controller.microphoneStatus)])
+        switch open.kind {
+        case .microphone:
+            apply(open.items[chosen])
+            answer("/mic", ["Microphone: " + Style.bold(controller.microphoneStatus)])
+        case .language:
+            setTranslation(open.items[chosen].value)
+            answer("/translate", [translationSummary])
+        }
     }
 
     private func closePicker() { setPicker(nil) }
 
     /// The picker floats above the box like the suggestions; closing it restores the history.
-    private func setPicker(_ value: MicrophonePicker?) {
+    private func setPicker(_ value: Picker?) {
         picker = value
         drawBlock()
     }
 
-    private func pickerLines(_ picker: MicrophonePicker, _ columns: Int) -> [String] {
-        picker.items.enumerated().map { index, item in
+    private func pickerLines(_ picker: Picker, _ columns: Int) -> [String] {
+        // At most eight rows; the window follows the selection, like the suggestions.
+        let visible = 8
+        let first = min(max(0, picker.selected - visible + 1), max(0, picker.items.count - visible))
+        return picker.items.enumerated().dropFirst(first).prefix(visible).map { index, item in
             let marker = item.active ? Style.color(theme.accent, "●") : Style.color(theme.muted, "○")
             let number = Style.color(theme.muted, index < 9 ? "\(index + 1)" : " ")
             let title = Style.fit(item.title, columns - 6)
@@ -671,6 +706,42 @@ final class TerminalConsole {
                 ? Style.color(theme.accent, "▸ ") + marker + " " + number + " " + Style.bold(title)
                 : "  " + marker + " " + number + " " + title
         }
+    }
+
+    private func languageItems() -> [Picker.Item] {
+        let target = controller.translationTarget
+        return [Picker.Item(title: "Off", value: nil, active: target == nil)]
+            + translationLanguages.map { Picker.Item(title: $0.name, value: $0.code, active: $0.code == target) }
+    }
+
+    /// `/translate` opens a language picker; `/translate spanish`, `/translate es` or `/translate off` set it directly.
+    private func translate(_ line: String, _ argument: String?) {
+        guard DictationTranslator.isAvailable else {
+            answer(line, [Style.color(theme.warning, "Translation needs macOS 26 or later.")]); return
+        }
+        guard let argument else {
+            let items = languageItems()
+            setPicker(Picker(kind: .language, items: items, selected: items.firstIndex(where: \.active) ?? 0))
+            return
+        }
+        if argument.lowercased() == "off" {
+            setTranslation(nil)
+        } else if let language = DictationTranslator.match(argument, in: translationLanguages) {
+            setTranslation(language.code)
+        } else {
+            answer(line, [Style.color(theme.warning, "There is no language \(argument).") + " Type /translate to choose."]); return
+        }
+        answer(line, [translationSummary])
+    }
+
+    private func setTranslation(_ code: String?) {
+        controller.translationTarget = code
+        defaults.set(code, forKey: Self.translationKey)
+    }
+
+    private var translationSummary: String {
+        guard let target = controller.translationTarget else { return "Translation is off." }
+        return "Translating into " + Style.bold(DictationTranslator.name(target)) + ". Speak in any language."
     }
 
     private func copy(_ line: String, _ argument: String?) {
@@ -690,6 +761,8 @@ final class TerminalConsole {
             ("State", controller.status),
             ("Model", "NVIDIA Parakeet TDT 0.6b v3, on this Mac"),
             ("Microphone", controller.microphoneStatus),
+            ("Translation", controller.translationTarget.map { "Into " + DictationTranslator.name($0) }
+                ?? "Off, type /translate to choose a language"),
             ("Accessibility", trusted ? "On" : "Off, type /accessibility to turn on"),
             ("Right Command", controller.couldListen ? "On"
                 : "Needs Accessibility or Input Monitoring for \(terminalApp); ⌃Space works without"),

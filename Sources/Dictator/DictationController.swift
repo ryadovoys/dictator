@@ -17,6 +17,10 @@ final class DictationController: ObservableObject {
     /// How the newest dictation went, for the terminal's history: where the text went, how long
     /// the recording was, and which microphone heard it. Set together with `dictationCount`.
     private(set) var lastDelivery: (outcome: String, seconds: TimeInterval, microphone: String)?
+    /// What was said, when the newest dictation was inserted as a translation of it.
+    private(set) var lastOriginal: String?
+    /// The language each dictation is translated into (`/translate`), nil to insert it as spoken.
+    var translationTarget: String?
     @Published private(set) var modelLoading = false
     @Published private(set) var modelLoaded = false
     @Published private(set) var activeMicrophoneName: String?
@@ -33,6 +37,7 @@ final class DictationController: ObservableObject {
     private var transcriber: LocalTranscriber
     private let transcription = DictationTranscription()
     private var transcriptionAudio: URL?
+    private var translation: DictationTranslator.Outcome?
     private var modelGeneration = UUID()
     private let panel = DictationStatusPanel()
     let microphonePreferences: MicrophonePreferences
@@ -288,9 +293,9 @@ final class DictationController: ObservableObject {
     private func finishRecording() {
         elapsedTimer?.invalidate(); elapsedTimer = nil
         let seconds = elapsed, microphone = microphoneStatus
-        let target = focusTarget
+        let target = focusTarget, translateTo = translationTarget
         let recorder = recorder, transcriber = transcriber, modelTask = modelTask
-        focusTarget = nil
+        focusTarget = nil; translation = nil
         phase = .transcribing
         panel.showWorking()
         transcription.start(recognize: {
@@ -301,7 +306,12 @@ final class DictationController: ObservableObject {
                 self.transcriptionAudio = audio
                 try await modelTask?.value
                 try Task.checkCancellation()
-                return try await transcriber.transcribe(audio)
+                let text = try await transcriber.transcribe(audio)
+                guard let translateTo else { return text }
+                let translation = await DictationTranslator.translate(text, to: translateTo)
+                try Task.checkCancellation()
+                self.translation = translation
+                return translation.text
             } catch {
                 if Task.isCancelled { try? FileManager.default.removeItem(at: audio) }
                 throw error
@@ -311,8 +321,12 @@ final class DictationController: ObservableObject {
         }, completed: { text, result in
             if let audio = self.transcriptionAudio { try? FileManager.default.removeItem(at: audio) }
             self.transcriptionAudio = nil
+            let translation = self.translation
+            self.translation = nil
             self.lastText = text
-            self.lastDelivery = (Self.outcome(result), seconds, microphone)
+            self.lastOriginal = translation?.original
+            let note = translation?.note.map { " · " + $0 } ?? ""
+            self.lastDelivery = (Self.outcome(result) + note, seconds, microphone)
             self.dictationCount += 1
             self.phase = .ready
             self.activeMicrophoneName = nil
@@ -325,7 +339,7 @@ final class DictationController: ObservableObject {
             }
         }, failed: { error in
             let audio = self.transcriptionAudio
-            self.transcriptionAudio = nil
+            self.transcriptionAudio = nil; self.translation = nil
             self.fail(error.localizedDescription, audio: audio)
         })
     }

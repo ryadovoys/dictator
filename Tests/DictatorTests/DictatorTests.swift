@@ -315,3 +315,26 @@ final class CopySnippetTests: XCTestCase {
                        "Давай попробуем ещё раз, но теперь с…")
     }
 }
+
+final class DictationTranslatorTests: XCTestCase {
+    private let languages = [
+        DictationTranslator.Language(code: "en", name: "English"),
+        DictationTranslator.Language(code: "es", name: "Spanish"),
+        DictationTranslator.Language(code: "zh-Hant", name: "Chinese (Traditional)"),
+    ]
+
+    func testLanguageIsFoundByCodeNameOrPrefix() {
+        XCTAssertEqual(DictationTranslator.match("es", in: languages)?.name, "Spanish")
+        XCTAssertEqual(DictationTranslator.match("SPANISH", in: languages)?.name, "Spanish")
+        XCTAssertEqual(DictationTranslator.match("span", in: languages)?.name, "Spanish")
+        XCTAssertEqual(DictationTranslator.match("zh-hant", in: languages)?.code, "zh-Hant")
+        XCTAssertNil(DictationTranslator.match("klingon", in: languages))
+    }
+
+    func testTextAlreadyInTheTargetLanguageIsLeftAlone() async throws {
+        try XCTSkipUnless(DictationTranslator.isAvailable)
+        let text = "Fix the login bug before the Friday release."
+        let outcome = await DictationTranslator.translate(text, to: "en")
+        XCTAssertEqual(outcome, .init(text: text, original: nil, note: nil))
+    }
+}
