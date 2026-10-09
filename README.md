@@ -4,16 +4,16 @@
 
 <h1 align="center">Dictator</h1>
 
-<p align="center"><b>A local dictation CLI for Mac. Rule your tasks with your voice.</b></p>
+<p align="center"><b>A local dictation CLI for Mac. Rule your tasks by voice.</b></p>
 
 <p align="center">A free, open-source alternative to Superwhisper, Wispr Flow and Granola that lives in your Terminal
 and runs NVIDIA Parakeet locally on your Mac.</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/macOS-15%2B-black" alt="macOS 15+">
-  <img src="https://img.shields.io/badge/Apple%20Silicon-M1%2B-black" alt="Apple Silicon">
-  <img src="https://img.shields.io/badge/100%25-offline-black" alt="100% offline">
-  <img src="https://img.shields.io/badge/license-MIT-black" alt="MIT license">
+  <img src="assets/badges/macos.svg" alt="macOS 15+">
+  <img src="assets/badges/apple-silicon.svg" alt="Apple Silicon M1+">
+  <img src="assets/badges/offline.svg" alt="100% offline">
+  <img src="assets/badges/license.svg" alt="MIT license">
 </p>
 
 ---
