@@ -29,10 +29,10 @@ FONT = {
 }
 
 BADGES = {
-    "macos": ("MACOS", "15+"),
-    "apple-silicon": ("APPLE SILICON", "M1+"),
-    "offline": ("100%", "OFFLINE"),
-    "license": ("LICENSE", "MIT"),
+    "macos-15": ("MACOS", "15+"),
+    "apple-silicon-m1": ("APPLE SILICON", "M1+"),
+    "offline-100": ("100%", "OFFLINE"),
+    "license-mit": ("LICENSE", "MIT"),
 }
 
 
