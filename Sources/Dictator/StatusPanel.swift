@@ -204,8 +204,8 @@ final class DictationStatusPanel {
         panel.orderFrontRegardless()
     }
 
-    /// Below the caret when there is room, so the text written so far stays readable, else above
-    /// it; bottom right when there is no caret.
+    /// Below the caret, so the text written so far stays readable, unless the caret is within
+    /// 100 pt of the screen's bottom edge; then above it. Bottom right when there is no caret.
     /// The mouse pointer as a thin caret-like rect, in the same top-left Accessibility coordinates.
     private static var pointerRect: CGRect? {
         guard let top = NSScreen.screens.first?.frame.maxY else { return nil }
@@ -233,7 +233,8 @@ final class DictationStatusPanel {
         let x = min(max(left, area.minX + gap), area.maxX - size.width - gap)
         let above = caret.maxY + gap
         let below = caret.minY - size.height - gap
-        let preferredY = below >= area.minY + gap ? below : above
+        let roomBelow: CGFloat = 100
+        let preferredY = caret.minY - area.minY >= roomBelow ? below : above
         let y = min(max(preferredY, area.minY + gap), area.maxY - size.height - gap)
         panel.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: size), display: true)
     }
