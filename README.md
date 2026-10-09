@@ -117,7 +117,7 @@ Stop it with `./dictator/dictator --stop`. Its output goes to `~/Library/Logs/Di
 The terminal interface is monochrome, with a red Recording dot and a green Ready dot.
 Start with `--menu` to also get a menu-bar icon. `NO_COLOR=1` turns those colours off too.
 
-## Permissions
+## Security clearance
 
 macOS asks **Terminal** (not Dictator) for these, because Terminal started it:
 
