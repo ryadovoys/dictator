@@ -48,8 +48,6 @@
     --color-titlebar: var(--color-ink-800);
     --color-note: var(--color-ink-850);
     --color-note-toolbar: var(--color-ink-750);
-    --color-note-sidebar: var(--color-ink-800);
-    --color-note-selected: var(--color-ink-600);
     --color-text: var(--color-white);
     --color-muted: var(--color-grey-500);
     --color-recording: var(--color-red-500);
@@ -71,14 +69,7 @@
 
   #notes { left: var(--space-7); background: var(--color-note); }
   #notes .titlebar { height: 46px; background: var(--color-note-toolbar); }
-  #notes .body { display: flex; height: calc(100% - 46px); }
-  #sidebar { width: 180px; flex: none; background: var(--color-note-sidebar); padding: var(--space-3) var(--space-2);
-    border-right: 1px solid rgba(255,255,255,0.06); font-family: var(--font-sans); }
-  #sidebar .item { border-radius: 8px; padding: var(--space-2) var(--space-3); margin-bottom: 2px; }
-  #sidebar .item.selected { background: var(--color-note-selected); }
-  #sidebar .name { font-size: 14px; font-weight: 600; color: var(--color-text); }
-  #sidebar .meta { font-size: 12px; color: var(--color-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #note { flex: 1; padding: var(--space-4) var(--space-6); font: var(--font-size-note)/var(--line-height-note) var(--font-sans);
+  #note { padding: var(--space-4) var(--space-6); font: var(--font-size-note)/var(--line-height-note) var(--font-sans);
     color: var(--color-text); }
   #note .date { font-size: var(--font-size-note-date); color: var(--color-muted); text-align: center; margin-bottom: var(--space-3); }
   #note h1 { font-size: var(--font-size-note-title); line-height: 34px; font-weight: 700; margin-bottom: var(--space-2); }
@@ -115,14 +106,7 @@
       <div class="light" style="background:var(--color-traffic-yellow)"></div>
       <div class="light" style="background:var(--color-traffic-green)"></div>
     </div>
-    <div class="body">
-      <div id="sidebar">
-        <div class="item selected"><div class="name">This week</div><div class="meta">09:41 Ideas from the standup</div></div>
-        <div class="item"><div class="name">Groceries</div><div class="meta">Yesterday Oat milk, coffee</div></div>
-        <div class="item"><div class="name">Book list</div><div class="meta">Monday The Dictator's Handbook</div></div>
-      </div>
-      <div id="note"></div>
-    </div>
+    <div id="note"></div>
   </div>
   <div class="window" id="terminal">
     <div class="titlebar">
@@ -161,7 +145,7 @@ const withEyes = eyes => PIXELS.faces[0].map((row, y) => eyes[y - 18] ? row.slic
 const FORWARD = withEyes(FORWARD_EYES);
 const TALK = [2, 4, 1, 5, 3, 1, 4, 2, 5, 3];
 // The panel reserves the enlarged bubble's width in every state, so the head never shifts.
-const CELL = 3, BUBBLE_SCALE = 1.2, GAP = 8;
+const CELL = 1.5, BUBBLE_SCALE = 1.2, GAP = 8;
 const dcanvas = document.getElementById("dcanvas");
 dcanvas.width = (38 + Math.ceil(23 * BUBBLE_SCALE)) * CELL + 4; dcanvas.height = 45 * CELL;
 const dctx = dcanvas.getContext("2d");
@@ -199,17 +183,29 @@ const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const html = segs => segs.map(([t, c]) => c ? `<span class="${c}">${esc(t)}</span>` : esc(t)).join("");
 
 // ---- Timeline ---------------------------------------------------------------
-const TEXT1 = "Move the design review to Thursday at three and invite the whole team.";
-const TEXT2 = "Fix the login bug before the Friday release and tell the team.";
+const TEXT1 = "Move the design review to Thursday at three.";
+const TEXT2 = "Fix the login bug before the Friday release.";
 const T = {
   rec1: [1.2, 4.6], done1: 5.3, newline: 6.1,
-  rec2: [6.9, 9.9], done2: 10.6, end: 12.8,
+  rec2: [6.9, 9.9], done2: 10.6,
+  slash: 11.6, down: 12.2, tab: 12.8, cdown1: 13.5, cdown2: 14.0, pickCopy: 14.7, end: 17.0,
 };
 const KEYS = [
   [T.rec1[0], 0.8, "Right ⌘", "start"], [T.rec1[1], 0.8, "Right ⌘", "stop"],
   [T.newline, 0.5, "⏎"],
   [T.rec2[0], 0.8, "Right ⌘", "start"], [T.rec2[1], 0.8, "Right ⌘", "stop"],
+  [T.slash, 0.5, "/"], [T.down, 0.45, "↓"], [T.tab, 0.5, "Tab"],
+  [T.cdown1, 0.45, "↓"], [T.cdown2, 0.45, "↓"], [T.pickCopy, 0.55, "⏎"],
 ];
+// Slash suggestions as TerminalConsole draws them (/accessibility is hidden once granted).
+const COMMANDS = [
+  ["mic", "choose a microphone, or pick number n"],
+  ["copy", "copy the last dictation, or the n-th from the end"],
+  ["status", "model, microphone, permissions"],
+  ["clear", "clear the screen"],
+  ["quit", "quit Dictator (Ctrl+C works too)"],
+];
+const snippet = s => { if (s.length <= 40) return s; const cut = s.slice(0, 40); return cut.slice(0, cut.lastIndexOf(" ")).replace(/[.,]$/, "") + "…"; };
 const WORDMARK = [
   "▀▀▀▀▀▀╗ ▀▀╗▀▀▀▀▀▀▀╗▀▀▀▀▀▀▀▀╗ ▀▀▀▀▀╗ ▀▀▀▀▀▀▀▀╗ ▀▀▀▀▀▀╗ ▀▀▀▀▀▀╗",
   "▀▀╔══▀▀╗▀▀║▀▀╔════╝╚══▀▀╔══╝▀▀╔══▀▀╗╚══▀▀╔══╝▀▀╔═══▀▀╗▀▀╔══▀▀╗",
@@ -218,11 +214,12 @@ const WORDMARK = [
   "▀▀▀▀▀▀╔╝▀▀║▀▀▀▀▀▀▀╗   ▀▀║   ▀▀║  ▀▀║   ▀▀║   ╚▀▀▀▀▀▀╔╝▀▀║  ▀▀║",
   "╚═════╝ ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝",
 ];
+const answer = (command, first) => [[S(command, "b")], [S("  ⎿ ", "m"), ...first]];
 const entry = (text, seconds) => [[S("⏺ "), S(text)], [S("  ⎿ inserted · " + seconds + " · " + MIC, "m")]];
 
 function state(t) {
   const st = { lines: [], status: null, face: null, dots: 0, scale: 0,
-               note: [], recording: false };
+               note: [], recording: false, overlay: [], input: "", terminalFocused: t >= T.slash };
   // Notes: the dictations land where the text cursor was.
   st.note = ["Ideas from the standup:", "Ship the onboarding flow next sprint.", ""];
   if (t >= T.done1) st.note[2] = TEXT1;
@@ -240,6 +237,23 @@ function state(t) {
   const push = block => { block.forEach(l => wrap(l).forEach(w => L.push(w))); L.push([]); };
   if (t >= T.done1) push(entry(TEXT1, "3.4 s"));
   if (t >= T.done2) push(entry(TEXT2, "3.0 s"));
+  if (t >= T.pickCopy) push(answer("/copy 2", [S("Copied: "), S(TEXT1)]));
+
+  // "/" lists the commands; Tab on copy lists the last dictations, newest first.
+  // Rows are cut to the terminal width with an ellipsis, as Style.fit does.
+  const fit = s => s.length > COLS - 3 ? s.slice(0, COLS - 4) + "…" : s;
+  const row = (label, detail, selected) => selected ? [S("▸ " + fit(label + detail), "b")] : [S("  "), S(fit(label + detail), "m")];
+  if (t >= T.slash && t < T.tab) {
+    st.input = "/";
+    const sel = t >= T.down ? 1 : 0;
+    st.overlay = COMMANDS.map(([n, d], i) => row(n.padEnd(16), d, i === sel));
+  } else if (t >= T.tab && t < T.pickCopy) {
+    st.input = "copy ";
+    const sel = t >= T.cdown2 ? 2 : t >= T.cdown1 ? 1 : 0;
+    st.overlay = [row("copy".padEnd(16), COMMANDS[1][1], sel === 0),
+                  row("copy ", `"${snippet(TEXT2)}"`, sel === 1),
+                  row("copy ", `"${snippet(TEXT1)}"`, sel === 2)];
+  }
 
   const rec = [T.rec1, T.rec2].find(([a, b]) => t >= a && t < b);
   const done = t >= T.rec2[1] ? T.done2 : T.done1;
@@ -271,7 +285,8 @@ function render(t) {
   const st = state(t);
 
   // Notes, with the caret at the end of the last paragraph. It blinks only while idle.
-  const caretOn = st.recording || Math.floor(t * 1.8) % 2 === 0;
+  // Once you type into Terminal, Notes loses focus and its caret disappears.
+  const caretOn = !st.terminalFocused && (st.recording || Math.floor(t * 1.8) % 2 === 0);
   const paras = st.note.map((p, i) => `<p>${esc(p)}${i === st.note.length - 1 ? `<span id="caret" style="opacity:${caretOn ? 1 : 0}"></span>` : ""}</p>`);
   note.innerHTML = `<div class="date">9 October 2026 at 09:41</div><h1>This week</h1>` + paras.join("");
 
@@ -279,7 +294,8 @@ function render(t) {
   const rule = [S("─".repeat(COLS - 1), "m")];
   let rows = st.lines.slice(-REGION);
   while (rows.length < REGION) rows.push([]);
-  const inputLine = [S("T", "cursor m"), S("ype / to see commands", "m")];
+  st.overlay.forEach((l, i) => { rows[REGION - st.overlay.length + i] = l; });
+  const inputLine = st.input ? [S(st.input), S(" ", "cursor")] : [S("T", "cursor m"), S("ype / to see commands", "m")];
   rows = rows.concat([rule, inputLine, rule, st.status]);
   screen.innerHTML = rows.map(r => `<div class="row">${html(r)}</div>`).join("");
 
@@ -289,7 +305,7 @@ function render(t) {
     w.style.opacity = ease; w.style.transform = `translateY(${(1 - ease) * 24}px)`;
   });
 
-  // Dictator: centred on the caret, 8 pt above it, kept inside the Notes window.
+  // Dictator: centred on the caret, 8 pt below it so the text above stays readable, kept inside the Notes window.
   const d = document.getElementById("dictator");
   if (st.face && st.scale > 0) {
     drawDictator(st.face, st.dots);
@@ -297,7 +313,7 @@ function render(t) {
     const win = document.getElementById("notes").getBoundingClientRect();
     const left = Math.min(Math.max(caret.left + caret.width / 2 - dcanvas.width / 2, win.left + GAP), win.right - dcanvas.width - GAP);
     d.style.left = `${Math.round(left)}px`;
-    d.style.top = `${Math.round(caret.top - GAP - dcanvas.height)}px`;
+    d.style.top = `${Math.round(caret.bottom + GAP)}px`;
     const s = st.scale, pop = s < 1 ? s * (1 + 0.12 * Math.sin(s * Math.PI)) : 1;
     d.style.opacity = Math.min(1, s * 1.5); d.style.transform = `scale(${pop})`;
   } else d.style.opacity = 0;
