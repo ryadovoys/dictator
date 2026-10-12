@@ -43,10 +43,11 @@ final class TerminalConsole {
     private var suggestionIndex = 0
 
     // Session state.
-    private var dictations: [String] = []
+    /// This session's dictations, oldest first; the menu-bar icon lists them too.
+    private(set) var dictations: [String] = []
     /// Languages Apple Translation can produce; loaded once at start.
     private var translationLanguages: [DictationTranslator.Language] = []
-    private static let translationKey = "terminal.translateTo"
+    static let translationKey = "terminal.translateTo"
     private var seenDictations = 0
     private var lastFailure: String?
     private var wasTrusted = false
@@ -130,7 +131,8 @@ final class TerminalConsole {
         // Free the scroll region and leave the cursor under everything.
         let text = farewell.map { wrapped($0).joined(separator: "\r\n") }
             ?? Style.color(theme.muted, "Dictator stopped.")
-        write("\u{1B}[r\u{1B}[\(regionBottom + 1);1H\u{1B}[J" + text + "\r\n")
+        // Start above any suggestion rows, so the menu that ran /background does not linger.
+        write("\u{1B}[r\u{1B}[\(max(1, regionBottom - overlayRows + 1));1H\u{1B}[J" + text + "\r\n")
         Self.leaveRawMode()
     }
 
@@ -698,9 +700,21 @@ final class TerminalConsole {
             BackgroundMode.claim()
             answer(line, [Style.color(theme.error, error.localizedDescription)]); return
         }
-        farewell = "Dictator is running in the background. You can close this tab.\n"
-            + Style.color(theme.muted, "Stop it with: dictator --stop · Log: " + DictatorPaths.backgroundLog.path)
+        let log = DictatorPaths.backgroundLog.path
+            .replacingOccurrences(of: FileManager.default.homeDirectoryForCurrentUser.path, with: "~")
+        farewell = Style.color(theme.success, "✓ ") + Style.bold("Dictator is running in the background. You can close this tab.")
+            + "\n  Its microphone icon in the menu bar brings it back here or quits it."
+            + "\n  Or stop it: " + Style.bold(Self.stopCommand)
+            + "\n" + Style.color(theme.muted, "  Log: " + log)
         NSApp.terminate(nil)
+    }
+
+    /// The command that stops the background copy, as typed from the current folder.
+    private static var stopCommand: String {
+        var path = BackgroundMode.launcher.path
+        let here = FileManager.default.currentDirectoryPath + "/"
+        if path.hasPrefix(here) { path = "./" + path.dropFirst(here.count) }
+        return (path.contains(" ") ? "'\(path)'" : path) + " --stop"
     }
 
     /// A list above the box: microphones (`/mic`) or translation languages (`/translate`).

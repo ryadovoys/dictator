@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// `dictator --background` starts a copy detached from the terminal tab, so the tab can be closed;
 /// `dictator --stop` ends it. The copy is a child of the terminal app, so it keeps the terminal's
@@ -43,7 +43,8 @@ enum BackgroundMode {
         defer { posix_spawnattr_destroy(&attributes) }
         // A session of its own: closing the tab (SIGHUP to the tab's session) does not reach it.
         posix_spawnattr_setflags(&attributes, Int16(POSIX_SPAWN_SETSID))
-        let arguments = [executable] + CommandLine.arguments.dropFirst().filter { $0 != "--background" }
+        // In the background the menu-bar icon is the way back: status, copy, CLI mode, quit.
+        let arguments = [executable] + CommandLine.arguments.dropFirst().filter { $0 != "--background" && $0 != "--menu" } + ["--menu"]
         let argv = arguments.map { strdup($0) } + [nil]
         defer { argv.forEach { free($0) } }
         var pid: pid_t = 0
@@ -59,6 +60,38 @@ enum BackgroundMode {
         for _ in 0..<100 where kill(pid, 0) == 0 { usleep(100_000) }
         return true
     }
+
+    /// What starts Dictator in a terminal: the shipped launcher (`dictator/dictator`, next to
+    /// `bin/`) when there is one, otherwise this binary.
+    static var launcher: URL {
+        let binary = URL(fileURLWithPath: Bundle.main.executablePath ?? "dictator")
+        let folder = binary.deletingLastPathComponent()
+        return folder.lastPathComponent == "bin"
+            ? folder.deletingLastPathComponent().appendingPathComponent("dictator").standardizedFileURL : binary
+    }
+
+    /// Opens Dictator in a new window of the terminal app it was started from: Accessibility and
+    /// Input Monitoring belong to that app, so another one would start without them. macOS hands
+    /// the launching app's bundle ID down to every process it starts.
+    static func openInTerminal() throws {
+        let known = ["com.apple.Terminal", "com.googlecode.iterm2", ghostty]
+        let inherited = ProcessInfo.processInfo.environment["__CFBundleIdentifier"] ?? ""
+        let bundleID = known.contains(inherited) ? inherited : "com.apple.Terminal"
+        guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            throw DictationError.message("Cannot find the terminal app.")
+        }
+        let open = Process()
+        open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        // Terminal and iTerm run an executable they are asked to open; Ghostty takes it as -e.
+        open.arguments = bundleID == ghostty
+            ? ["-na", app.path, "--args", "-e", launcher.path]
+            : ["-a", app.path, launcher.path]
+        try open.run()
+        open.waitUntilExit()
+        guard open.terminationStatus == 0 else { throw DictationError.message("Could not open the terminal app.") }
+    }
+
+    private static let ghostty = "com.mitchellh.ghostty"
 
     private static func isDictator(_ pid: pid_t) -> Bool {
         var buffer = [CChar](repeating: 0, count: 4 * Int(MAXPATHLEN))

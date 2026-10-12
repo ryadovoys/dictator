@@ -15,7 +15,16 @@ final class DictatorAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate
     private let cancelItem = NSMenuItem(title: "Cancel Dictation", action: #selector(cancelDictation), keyEquivalent: "")
     private let copyItem = NSMenuItem(title: "Copy Last Dictation", action: #selector(copyLast), keyEquivalent: "")
     private let accessibilityItem = NSMenuItem(title: "Allow Auto-Paste…", action: #selector(allowAccessibility), keyEquivalent: "")
+    private let statusLine = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private let recentItem = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
+    private let cliItem = NSMenuItem(title: "CLI Mode", action: #selector(openCLI), keyEquivalent: "")
     private let microphoneMenu = NSMenu()
+    private let recentMenu = NSMenu()
+    private let translationMenu = NSMenu()
+    private var translationLanguages: [DictationTranslator.Language] = []
+    /// Started detached (`--background`): no terminal to type commands into, so the menu offers
+    /// the way back to one.
+    private let detached = isatty(STDIN_FILENO) == 0
 
     init(showsMenu: Bool) {
         self.showsMenu = showsMenu
@@ -48,7 +57,10 @@ final class DictatorAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate
         refresh()
     }
 
-    func menuWillOpen(_ menu: NSMenu) { preferences.refresh(); refresh() }
+    func menuWillOpen(_ menu: NSMenu) {
+        preferences.refresh(); refresh()
+        rebuildRecentMenu(); rebuildTranslationMenu()
+    }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard controller.isBusy else { console?.bye(); return .terminateNow }
@@ -69,13 +81,28 @@ final class DictatorAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate
         status.button?.imagePosition = .imageLeading
         let menu = NSMenu()
         menu.delegate = self
+        menu.autoenablesItems = false
+        statusLine.isEnabled = false
+        menu.addItem(statusLine)
+        menu.addItem(.separator())
         for item in [cancelItem, copyItem] { item.target = self; menu.addItem(item) }
+        recentItem.submenu = recentMenu
+        menu.addItem(recentItem)
+        menu.addItem(.separator())
         let microphones = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
         microphones.submenu = microphoneMenu
         menu.addItem(microphones)
+        let translation = NSMenuItem(title: "Translate", action: nil, keyEquivalent: "")
+        translation.submenu = translationMenu
+        menu.addItem(translation)
         accessibilityItem.target = self
         menu.addItem(accessibilityItem)
+        menu.addItem(.separator())
+        cliItem.target = self
+        cliItem.isHidden = !detached
+        menu.addItem(cliItem)
         menu.addItem(NSMenuItem(title: "Quit Dictator", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        Task { translationLanguages = await DictationTranslator.languages() }
         status.menu = menu
         self.status = status
     }
@@ -97,7 +124,63 @@ final class DictatorAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate
         cancelItem.isHidden = phase != .starting && phase != .recording
         copyItem.isHidden = controller.lastText.isEmpty
         accessibilityItem.isHidden = controller.accessibilityTrusted
+        statusLine.title = controller.status
+        // Handing over mid-dictation would drop it.
+        cliItem.isEnabled = !controller.isBusy
         rebuildMicrophoneMenu()
+    }
+
+    /// The last five dictations, newest first, by their opening words; choosing one copies it.
+    private func rebuildRecentMenu() {
+        recentMenu.removeAllItems()
+        let recent = console?.dictations.suffix(5).reversed() ?? []
+        recentItem.isHidden = recent.isEmpty
+        for text in recent {
+            let title = text.count > 40 ? text.prefix(40) + "…" : text
+            let item = NSMenuItem(title: title, action: #selector(copyRecent(_:)), keyEquivalent: "")
+            item.target = self; item.representedObject = text
+            recentMenu.addItem(item)
+        }
+    }
+
+    private func rebuildTranslationMenu() {
+        translationMenu.removeAllItems()
+        let target = controller.translationTarget
+        let off = NSMenuItem(title: "Off", action: #selector(chooseTranslation(_:)), keyEquivalent: "")
+        off.target = self; off.state = target == nil ? .on : .off
+        translationMenu.addItem(off)
+        for language in translationLanguages {
+            let item = NSMenuItem(title: language.name, action: #selector(chooseTranslation(_:)), keyEquivalent: "")
+            item.target = self; item.representedObject = language.code
+            item.state = language.code == target ? .on : .off
+            translationMenu.addItem(item)
+        }
+    }
+
+    @objc private func chooseTranslation(_ sender: NSMenuItem) {
+        let code = sender.representedObject as? String
+        controller.translationTarget = code
+        defaults.set(code, forKey: TerminalConsole.translationKey)
+    }
+
+    @objc private func copyRecent(_ sender: NSMenuItem) {
+        guard let text = sender.representedObject as? String else { return }
+        FocusInserter.copy(text)
+    }
+
+    /// Hands over to Dictator in a terminal window and quits this copy. The new copy refuses to
+    /// start while this one holds the PID file, so it is released first.
+    @objc private func openCLI() {
+        guard !controller.isBusy else { return }
+        BackgroundMode.release()
+        do {
+            try BackgroundMode.openInTerminal()
+        } catch {
+            BackgroundMode.claim()
+            print(error.localizedDescription)
+            return
+        }
+        NSApp.terminate(nil)
     }
 
     private func rebuildMicrophoneMenu() {
@@ -137,7 +220,7 @@ enum DictatorMain {
             Usage: dictator [--background] [--menu]
               Runs until /quit or Ctrl+C. Tap Right Command (or ⌃Space) to start and stop,
               or hold it while you speak. Type / inside for commands (/mic, /copy, /status, …).
-              --background  keep running after this tab is closed (output goes to ~/Library/Logs/Dictator.log)
+              --background  keep running after this tab is closed, with a menu-bar icon (output goes to ~/Library/Logs/Dictator.log)
               --stop        stop the copy running in the background
               --menu        also show a menu-bar icon
               --version     print the version
@@ -178,7 +261,8 @@ enum DictatorMain {
             }
             print("""
             Dictator is running in the background. You can close this tab.
-            Stop it with: dictator --stop · Log: \(DictatorPaths.backgroundLog.path)
+            Its microphone icon in the menu bar brings it back to a terminal or quits it.
+            Or stop it with: dictator --stop · Log: \(DictatorPaths.backgroundLog.path)
             """)
         } catch {
             print(error.localizedDescription)
