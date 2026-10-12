@@ -103,6 +103,7 @@ the `/` is optional). ↑↓ choose, Tab completes, Enter runs.
 | `/status` | model, microphone, permissions |
 | `/clear` | clear the screen |
 | `/accessibility` | ask macOS to let Dictator type the text for you |
+| `/background` | keep running after you close the tab |
 | `/quit` | quit (Ctrl+C works too) |
 
 ### Spy mode
@@ -113,7 +114,7 @@ Dictator keeps running after you close the tab. It still records only when you p
 ./dictator/dictator --background
 ```
 
-It keeps the tab's Terminal permissions. Stop it with `./dictator/dictator --stop`. Its output goes to `~/Library/Logs/Dictator.log`.
+Or type `/background` in a running Dictator. It keeps the tab's Terminal permissions. Stop it with `./dictator/dictator --stop`. Its output goes to `~/Library/Logs/Dictator.log`.
 
 The terminal interface is monochrome, with a red Recording dot and a green Ready dot.
 Start with `--menu` to also get a menu-bar icon. `NO_COLOR=1` turns those colours off too.

@@ -22,6 +22,7 @@ final class TerminalConsole {
         Command(name: "/translate", usage: "/translate [language|off]", summary: "translate what you say into a language"),
         Command(name: "/status", usage: "/status", summary: "model, microphone, permissions"),
         Command(name: "/accessibility", usage: "/accessibility", summary: "let Dictator type the text for you"),
+        Command(name: "/background", usage: "/background", summary: "keep running after this tab is closed"),
         Command(name: "/clear", usage: "/clear", summary: "clear the screen"),
         Command(name: "/quit", usage: "/quit", summary: "quit Dictator (Ctrl+C works too)"),
     ]
@@ -49,6 +50,11 @@ final class TerminalConsole {
     private var seenDictations = 0
     private var lastFailure: String?
     private var wasTrusted = false
+    /// What the banner says about the speech model ("loading", a download percent, or nothing),
+    /// so the banner is repainted only when that changes.
+    private var modelNotice: String?
+    /// Printed instead of "Dictator stopped." when this copy hands over to a background one.
+    private var farewell: String?
     /// The app this was started from (Terminal, iTerm, …): macOS grants Accessibility to it.
     private let terminalApp = NSWorkspace.shared.frontmostApplication?.localizedName ?? "your terminal app"
 
@@ -110,6 +116,7 @@ final class TerminalConsole {
         resize.setEventHandler { [weak self] in Task { @MainActor in self?.scheduleReplay() } }
         resize.resume()
         self.resize = resize
+        modelNotice = currentModelNotice
         layout()
         started = true
         Task { translationLanguages = await DictationTranslator.languages() }
@@ -121,7 +128,9 @@ final class TerminalConsole {
     func bye() {
         guard interactive else { print("Dictator stopped."); return }
         // Free the scroll region and leave the cursor under everything.
-        write("\u{1B}[r\u{1B}[\(regionBottom + 1);1H\u{1B}[J" + Style.color(theme.muted, "Dictator stopped.") + "\r\n")
+        let text = farewell.map { wrapped($0).joined(separator: "\r\n") }
+            ?? Style.color(theme.muted, "Dictator stopped.")
+        write("\u{1B}[r\u{1B}[\(regionBottom + 1);1H\u{1B}[J" + text + "\r\n")
         Self.leaveRawMode()
     }
 
@@ -150,7 +159,42 @@ final class TerminalConsole {
                 emit(Style.color(theme.success, "✓ ") + "Accessibility granted. Your words now go straight into the field, as the people always wanted.")
             }
         }
+        if interactive, started, modelNotice != currentModelNotice {
+            let height = banner().count
+            modelNotice = currentModelNotice
+            refreshBanner(heightChanged: banner().count != height)
+        }
         if interactive { if started { drawBlock() } } else { plainStatus() }
+    }
+
+    private var currentModelNotice: String? {
+        if let progress = controller.downloadProgress { return "download \(Int(progress * 100))" }
+        return controller.modelLoading ? "loading" : nil
+    }
+
+    /// A new download percent keeps the banner's height: repaint the rows in place, without the
+    /// full clear that would flicker. The notice appearing or going changes it: lay out again.
+    private func refreshBanner(heightChanged: Bool) {
+        guard !heightChanged else { layout(); return }
+        historyLines = banner() + transcript.flatMap(entryLines)
+        overlayRows = 0
+        write("\u{1B}[?25l" + paintHistory(1...regionBottom))
+    }
+
+    /// Under the introduction while the speech model is not ready yet: the status line alone is
+    /// easy to miss, and dictation does nothing until the model is in memory.
+    private func modelNoticeLines() -> [String] {
+        if let progress = controller.downloadProgress {
+            let cells = 30
+            let filled = min(cells, Int(progress * Double(cells)))
+            let bar = Style.bold(String(repeating: "█", count: filled))
+                + Style.color(theme.muted, String(repeating: "░", count: cells - filled))
+            return wrapped(Style.bold("↓ Downloading speech model \(Int(progress * 100))%"))
+                + [bar + Style.color(theme.muted, "  about 470 MB, once")]
+        }
+        guard controller.modelLoading else { return [] }
+        return wrapped(Style.bold("◌ Loading speech model…"))
+            + wrapped(Style.color(theme.muted, "Dictation starts as soon as it's ready, usually a few seconds."))
     }
 
     // MARK: - Output above the block
@@ -193,6 +237,8 @@ final class TerminalConsole {
             lines += mark.map { Style.bold(Style.color(theme.accent, $0)) } + [""]
         }
         lines += wrapped(title) + wrapped(subtitle) + wrapped(audioHint) + wrapped(hint)
+        let notice = modelNoticeLines()
+        if !notice.isEmpty { lines += [""] + notice }
         if !controller.accessibilityTrusted {
             lines.append("")
             for (index, line) in Self.clipboardModeExplanation.enumerated() {
@@ -604,7 +650,7 @@ final class TerminalConsole {
         let argument = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespaces) : nil
         // Commands without parameters must stand alone: dictated words in this box ("quit smoking",
         // "clear the table") never quit or clear.
-        if argument != nil, ["/status", "/accessibility", "/clear", "/quit", "/exit", "/q"].contains(command) {
+        if argument != nil, ["/status", "/accessibility", "/background", "/clear", "/quit", "/exit", "/q"].contains(command) {
             answer(line, [Style.color(theme.warning, "Unknown command.") + " Type / to see them."]); return
         }
         switch command {
@@ -621,6 +667,7 @@ final class TerminalConsole {
                 answer(line, ["Opened Privacy & Security → Accessibility. Turn on " + Style.bold(terminalApp) + ".",
                               Style.color(theme.muted, "If the switch is greyed out, IT has to allow it. Dictator notices by itself.")])
             }
+        case "/background": background(line)
         case "/clear":
             transcript = []
             layout()
@@ -629,6 +676,31 @@ final class TerminalConsole {
             // Words dictated while this window has focus land here; Enter only runs real commands.
             answer(line, [Style.color(theme.warning, "Unknown command.") + " Type / to see them."])
         }
+    }
+
+    /// Hands over to a detached copy (as `dictator --background` would) and quits this one.
+    private func background(_ line: String) {
+        guard !controller.isBusy else {
+            answer(line, [Style.color(theme.warning, "Finish or cancel the dictation first.")]); return
+        }
+        // The new copy refuses to start while this one holds the PID file.
+        BackgroundMode.release()
+        do {
+            let pid = try BackgroundMode.spawn()
+            usleep(500_000)
+            guard kill(pid, 0) == 0 else {
+                BackgroundMode.claim()
+                answer(line, [Style.color(theme.error, "The background copy stopped right away."),
+                              Style.color(theme.muted, "See " + DictatorPaths.backgroundLog.path)])
+                return
+            }
+        } catch {
+            BackgroundMode.claim()
+            answer(line, [Style.color(theme.error, error.localizedDescription)]); return
+        }
+        farewell = "Dictator is running in the background. You can close this tab.\n"
+            + Style.color(theme.muted, "Stop it with: dictator --stop · Log: " + DictatorPaths.backgroundLog.path)
+        NSApp.terminate(nil)
     }
 
     /// A list above the box: microphones (`/mic`) or translation languages (`/translate`).
