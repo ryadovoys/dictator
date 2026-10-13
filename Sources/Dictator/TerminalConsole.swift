@@ -96,6 +96,8 @@ final class TerminalConsole {
     // MARK: - Lifecycle
 
     func start() {
+        // Only a later change of permission is news; the banner already states the current one.
+        wasTrusted = controller.accessibilityTrusted
         guard interactive else {
             var lines = ["Dictator v\(DictatorVersion.current)",
                          "Local speech to text, nothing leaves this Mac",
@@ -121,7 +123,6 @@ final class TerminalConsole {
         layout()
         started = true
         Task { translationLanguages = await DictationTranslator.languages() }
-        wasTrusted = controller.accessibilityTrusted
         if !wasTrusted { requestInitialAccessibility() }
         readInput()
     }

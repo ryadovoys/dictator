@@ -106,7 +106,7 @@ the `/` is optional). ↑↓ choose, Tab completes, Enter runs.
 | `/background` | keep running after you close the tab |
 | `/quit` | quit (Ctrl+C works too) |
 
-### Spy mode
+### Stealth mode
 
 Dictator keeps running after you close the tab. It still records only when you press the key.
 
