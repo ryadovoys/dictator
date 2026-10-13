@@ -53,7 +53,9 @@ enum FocusInserter {
             return .copiedPasteUnavailable
         }
         down.flags = .maskCommand; up.flags = .maskCommand
-        down.postToPid(target.pid); up.postToPid(target.pid)
+        // Post through the system like a real keystroke: some apps ignore events posted straight to
+        // their process. The focus check above makes the target the frontmost field.
+        down.post(tap: .cghidEventTap); up.post(tap: .cghidEventTap)
         try? await Task.sleep(for: .milliseconds(400))
         // Never overwrite a clipboard value the user copied while paste was in flight.
         guard pasteboard.changeCount == dictationChangeCount else { return .inserted }

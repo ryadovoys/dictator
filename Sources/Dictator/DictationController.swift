@@ -348,7 +348,9 @@ final class DictationController: ObservableObject {
         switch result {
         case .inserted: return "inserted"
         case .copiedFocusChanged: return "copied, the field changed"
-        case .copiedNoAccessibility, .copiedPasteUnavailable, .copiedPasteUnconfirmed: return "copied, press ⌘V"
+        case .copiedNoAccessibility: return "copied, Accessibility is off · ⌘V to paste"
+        case .copiedPasteUnavailable: return "copied, could not send ⌘V · ⌘V to paste"
+        case .copiedPasteUnconfirmed: return "copied, the field did not confirm the paste · ⌘V to paste"
         }
     }
 
